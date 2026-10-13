@@ -15,6 +15,9 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
+import javax.annotation.Nullable;
+import java.util.NoSuchElementException;
+
 /** Modelo de bloques sencillo (ligero para ordenadores modestos). */
 public class RobotModel<T extends BaseRobotEntity> extends EntityModel<T> {
     public static final ModelLayerLocation BUILDER_LAYER =
@@ -28,6 +31,9 @@ public class RobotModel<T extends BaseRobotEntity> extends EntityModel<T> {
     private final ModelPart leftArm;
     private final ModelPart rightLeg;
     private final ModelPart leftLeg;
+    @Nullable
+    private final ModelPart drill; // solo el minero
+
 
     public RobotModel(ModelPart root) {
         this.root = root;
@@ -36,6 +42,13 @@ public class RobotModel<T extends BaseRobotEntity> extends EntityModel<T> {
         this.leftArm = root.getChild("left_arm");
         this.rightLeg = root.getChild("right_leg");
         this.leftLeg = root.getChild("left_leg");
+        ModelPart foundDrill = null;
+        try {
+            foundDrill = rightArm.getChild("drill");
+        } catch (NoSuchElementException e) {
+            // el constructor no tiene taladro
+        }
+        this.drill = foundDrill;
     }
 
     private static PartDefinition createBase(MeshDefinition mesh) {
@@ -69,22 +82,47 @@ public class RobotModel<T extends BaseRobotEntity> extends EntityModel<T> {
         return LayerDefinition.create(mesh, 64, 64);
     }
 
-    /** Minero: casco con lámpara y taladro en el brazo. */
+    /**
+     * Minero: casco amarillo con linterna, mochila para el mineral, hombreras,
+     * piernas con orugas y un taladro grande que gira. Textura de 128x64.
+     */
     public static LayerDefinition createMinerLayer() {
         MeshDefinition mesh = new MeshDefinition();
-        PartDefinition p = createBase(mesh);
+        PartDefinition p = mesh.getRoot();
         p.addOrReplaceChild("head", CubeListBuilder.create()
                         .texOffs(0, 0).addBox(-4.0F, -8.0F, -4.0F, 8, 8, 8)
-                        .texOffs(40, 0).addBox(-1.0F, -9.0F, -5.0F, 2, 2, 1),
+                        .texOffs(64, 0).addBox(-4.5F, -9.0F, -4.5F, 9, 3, 9)      // casco
+                        .texOffs(64, 12).addBox(-4.5F, -6.5F, -5.5F, 9, 1, 1)     // visera del casco
+                        .texOffs(100, 0).addBox(-1.5F, -9.0F, -6.0F, 3, 3, 2),    // linterna
                 PartPose.offset(0.0F, 8.0F, 0.0F));
+        p.addOrReplaceChild("body", CubeListBuilder.create()
+                        .texOffs(0, 16).addBox(-4.0F, 0.0F, -3.0F, 8, 10, 6)
+                        .texOffs(64, 16).addBox(-3.0F, 1.0F, 3.0F, 6, 7, 3),      // mochila
+                PartPose.offset(0.0F, 8.0F, 0.0F));
+        p.addOrReplaceChild("right_leg", CubeListBuilder.create()
+                        .texOffs(0, 32).addBox(-2.0F, 0.0F, -2.0F, 4, 6, 4)
+                        .texOffs(64, 32).addBox(-2.5F, 4.0F, -3.0F, 5, 2, 6),     // oruga
+                PartPose.offset(-2.0F, 18.0F, 0.0F));
+        p.addOrReplaceChild("left_leg", CubeListBuilder.create()
+                        .texOffs(16, 32).addBox(-2.0F, 0.0F, -2.0F, 4, 6, 4)
+                        .texOffs(86, 32).addBox(-2.5F, 4.0F, -3.0F, 5, 2, 6),
+                PartPose.offset(2.0F, 18.0F, 0.0F));
+        p.addOrReplaceChild("left_arm", CubeListBuilder.create()
+                        .texOffs(44, 16).addBox(0.0F, -1.0F, -1.5F, 3, 9, 3)
+                        .texOffs(100, 16).addBox(-0.5F, -2.0F, -2.0F, 4, 3, 4),   // hombrera
+                PartPose.offset(4.0F, 9.0F, 0.0F));
         PartDefinition arm = p.addOrReplaceChild("right_arm", CubeListBuilder.create()
-                        .texOffs(32, 16).addBox(-3.0F, -1.0F, -1.5F, 3, 9, 3),
+                        .texOffs(32, 16).addBox(-3.0F, -1.0F, -1.5F, 3, 9, 3)
+                        .texOffs(84, 16).addBox(-3.5F, -2.0F, -2.0F, 4, 3, 4),    // hombrera
                 PartPose.offset(-4.0F, 9.0F, 0.0F));
-        arm.addOrReplaceChild("tool", CubeListBuilder.create()
-                        .texOffs(24, 40).addBox(-3.0F, 7.0F, -6.0F, 3, 3, 6)
-                        .texOffs(44, 32).addBox(-2.0F, 8.0F, -9.0F, 1, 1, 3),
-                PartPose.ZERO);
-        return LayerDefinition.create(mesh, 64, 64);
+        // taladro: apunta hacia delante desde la mano y gira sobre su eje
+        arm.addOrReplaceChild("drill", CubeListBuilder.create()
+                        .texOffs(32, 32).addBox(-2.0F, -2.0F, -4.0F, 4, 4, 4)
+                        .texOffs(32, 40).addBox(-1.5F, -1.5F, -7.0F, 3, 3, 3)
+                        .texOffs(44, 40).addBox(-1.0F, -1.0F, -9.0F, 2, 2, 2)
+                        .texOffs(48, 32).addBox(-0.5F, -0.5F, -11.0F, 1, 1, 2),
+                PartPose.offset(-1.5F, 8.5F, 0.0F));
+        return LayerDefinition.create(mesh, 128, 64);
     }
 
     @Override
@@ -100,6 +138,14 @@ public class RobotModel<T extends BaseRobotEntity> extends EntityModel<T> {
             rightArm.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * limbSwingAmount;
         }
         leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * limbSwingAmount;
+        if (drill != null) {
+            if (entity.isWorkingClient()) {
+                rightArm.xRot = -0.35F + Mth.sin(ageInTicks * 0.9F) * 0.06F; // vibra al taladrar
+                drill.zRot = ageInTicks * 0.9F;                               // gira
+            } else {
+                drill.zRot = 0.0F;
+            }
+        }
     }
 
     @Override
