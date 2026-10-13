@@ -51,6 +51,7 @@ public class RobotModel<T extends BaseRobotEntity> extends EntityModel<T> {
         this.drill = foundDrill;
     }
 
+    @SuppressWarnings("unused")
     private static PartDefinition createBase(MeshDefinition mesh) {
         PartDefinition p = mesh.getRoot();
         p.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 16).addBox(-4.0F, 0.0F, -3.0F, 8, 10, 6),
@@ -64,22 +65,47 @@ public class RobotModel<T extends BaseRobotEntity> extends EntityModel<T> {
         return p;
     }
 
-    /** Constructor: antena en la cabeza y brazo con "colocador" de bloques. */
+    /**
+     * Constructor: visera luminosa, antena con bombilla, cinturón de herramientas,
+     * caja de bloques a la espalda, hombreras, botas y una pinza que sujeta un bloque.
+     * Textura de 128x64.
+     */
     public static LayerDefinition createBuilderLayer() {
         MeshDefinition mesh = new MeshDefinition();
-        PartDefinition p = createBase(mesh);
-        PartDefinition head = p.addOrReplaceChild("head", CubeListBuilder.create()
+        PartDefinition p = mesh.getRoot();
+        p.addOrReplaceChild("head", CubeListBuilder.create()
                         .texOffs(0, 0).addBox(-4.0F, -8.0F, -4.0F, 8, 8, 8)
-                        .texOffs(56, 0).addBox(-0.5F, -11.0F, -0.5F, 1, 3, 1)
-                        .texOffs(56, 8).addBox(-1.0F, -13.0F, -1.0F, 2, 2, 2),
+                        .texOffs(100, 0).addBox(-0.5F, -11.0F, -0.5F, 1, 3, 1)    // antena
+                        .texOffs(104, 0).addBox(-1.0F, -13.0F, -1.0F, 2, 2, 2)    // bombilla
+                        .texOffs(112, 0).addBox(-5.0F, -5.0F, -1.0F, 1, 2, 2)     // tornillo izq.
+                        .texOffs(118, 0).addBox(4.0F, -5.0F, -1.0F, 1, 2, 2),     // tornillo der.
                 PartPose.offset(0.0F, 8.0F, 0.0F));
+        p.addOrReplaceChild("body", CubeListBuilder.create()
+                        .texOffs(0, 16).addBox(-4.0F, 0.0F, -3.0F, 8, 10, 6)
+                        .texOffs(64, 0).addBox(-4.5F, 7.0F, -3.5F, 9, 2, 7)       // cinturón de herramientas
+                        .texOffs(64, 16).addBox(-3.0F, 1.0F, 3.0F, 6, 6, 3),      // caja de bloques
+                PartPose.offset(0.0F, 8.0F, 0.0F));
+        p.addOrReplaceChild("right_leg", CubeListBuilder.create()
+                        .texOffs(0, 32).addBox(-2.0F, 0.0F, -2.0F, 4, 6, 4)
+                        .texOffs(64, 32).addBox(-2.5F, 4.0F, -3.0F, 5, 2, 5),     // bota
+                PartPose.offset(-2.0F, 18.0F, 0.0F));
+        p.addOrReplaceChild("left_leg", CubeListBuilder.create()
+                        .texOffs(16, 32).addBox(-2.0F, 0.0F, -2.0F, 4, 6, 4)
+                        .texOffs(84, 32).addBox(-2.5F, 4.0F, -3.0F, 5, 2, 5),
+                PartPose.offset(2.0F, 18.0F, 0.0F));
+        p.addOrReplaceChild("left_arm", CubeListBuilder.create()
+                        .texOffs(44, 16).addBox(0.0F, -1.0F, -1.5F, 3, 9, 3)
+                        .texOffs(100, 16).addBox(-0.5F, -2.0F, -2.0F, 4, 3, 4),   // hombrera
+                PartPose.offset(4.0F, 9.0F, 0.0F));
         PartDefinition arm = p.addOrReplaceChild("right_arm", CubeListBuilder.create()
-                        .texOffs(32, 16).addBox(-3.0F, -1.0F, -1.5F, 3, 9, 3),
+                        .texOffs(32, 16).addBox(-3.0F, -1.0F, -1.5F, 3, 9, 3)
+                        .texOffs(84, 16).addBox(-3.5F, -2.0F, -2.0F, 4, 3, 4),    // hombrera
                 PartPose.offset(-4.0F, 9.0F, 0.0F));
         arm.addOrReplaceChild("tool", CubeListBuilder.create()
-                        .texOffs(24, 32).addBox(-3.5F, 7.0F, -5.0F, 4, 2, 5),
+                        .texOffs(32, 32).addBox(-3.5F, 8.0F, -2.5F, 4, 2, 5)      // pinza
+                        .texOffs(32, 40).addBox(-3.5F, 9.5F, -6.0F, 4, 4, 4),     // bloque sujeto
                 PartPose.ZERO);
-        return LayerDefinition.create(mesh, 64, 64);
+        return LayerDefinition.create(mesh, 128, 64);
     }
 
     /**

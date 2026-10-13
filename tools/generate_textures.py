@@ -207,6 +207,95 @@ def miner():
     return img, glow
 
 
+def builder():
+    purple = (122, 62, 196, 255)
+    dpurple = (70, 40, 110, 255)
+    steel = (150, 152, 162, 255)
+    dsteel = (70, 72, 82, 255)
+    black = (28, 28, 32, 255)
+    leather = (120, 78, 40, 255)
+    visor = (120, 255, 200, 255)
+    bulb = (255, 220, 90, 255)
+    img = Image.new("RGBA", (128, 64), (0, 0, 0, 0))
+    glow = Image.new("RGBA", (128, 64), (0, 0, 0, 0))
+
+    # cabeza gris clara con visera verde agua y "boca" de altavoz
+    paint_box_noisy(img, 0, 0, 8, 8, 8, steel, 21)
+    fill(img, (8, 8, 16, 9), purple)                       # franja morada arriba
+    fill(img, (8, 10, 16, 13), (20, 20, 26, 255))
+    fill(img, (9, 11, 15, 12), visor)
+    fill(glow, (9, 11, 15, 12), visor)
+    for x in (10, 11, 12, 13):
+        img.putpixel((x, 14), dsteel if x % 2 else (40, 40, 48, 255))
+    # antena, bombilla y tornillos
+    paint_box_noisy(img, 100, 0, 1, 3, 1, dsteel, 22)
+    paint_box_noisy(img, 104, 0, 2, 2, 2, bulb, 23)
+    fill(glow, (104, 0, 112, 4), bulb)
+    paint_box_noisy(img, 112, 0, 1, 2, 2, dpurple, 24)
+    paint_box_noisy(img, 118, 0, 1, 2, 2, dpurple, 25)
+
+    # cuerpo morado con placa y núcleo
+    paint_box_noisy(img, 0, 16, 8, 10, 6, purple, 26)
+    fx, fy = 6, 22
+    fill(img, (fx + 1, fy + 1, fx + 7, fy + 6), steel)
+    fill(img, (fx + 2, fy + 2, fx + 6, fy + 5), dsteel)
+    fill(img, (fx + 3, fy + 3, fx + 5, fy + 4), visor)
+    fill(glow, (fx + 3, fy + 3, fx + 5, fy + 4), visor)
+    for (x, y) in ((fx + 1, fy + 1), (fx + 6, fy + 1), (fx + 1, fy + 5), (fx + 6, fy + 5)):
+        img.putpixel((x, y), (200, 200, 210, 255))
+    # cinturón de cuero con herramientas (martillo, regla, llave)
+    paint_box_noisy(img, 64, 0, 9, 2, 7, leather, 27)
+    ffx, ffy = 64 + 7, 7                                   # cara frontal del cinturón
+    fill(img, (ffx + 3, ffy, ffx + 6, ffy + 2), (200, 170, 60, 255))   # hebilla
+    fill(img, (ffx + 4, ffy, ffx + 5, ffy + 2), leather)
+    for (tx, col) in ((ffx, (110, 110, 120, 255)), (ffx + 7, (230, 200, 60, 255)), (ffx + 8, (170, 60, 50, 255))):
+        img.putpixel((tx, ffy), col)
+        img.putpixel((tx, ffy + 1), col)
+    # caja de bloques a la espalda (aspecto de madera con bloques asomando)
+    paint_box_noisy(img, 64, 16, 6, 6, 3, (150, 105, 60, 255), 28, edge=(90, 60, 30, 255))
+    tx0, ty0 = 64 + 3, 16                                  # tapa (arriba)
+    fill(img, (tx0, ty0, tx0 + 3, ty0 + 3), (125, 125, 125, 255))      # piedra
+    fill(img, (tx0 + 3, ty0, tx0 + 6, ty0 + 3), (95, 160, 60, 255))    # hierba
+    # hombreras
+    paint_box_noisy(img, 84, 16, 4, 3, 4, purple, 29, edge=dpurple)
+    paint_box_noisy(img, 100, 16, 4, 3, 4, purple, 30, edge=dpurple)
+    # brazos
+    paint_box_noisy(img, 32, 16, 3, 9, 3, steel, 31)
+    paint_box_noisy(img, 44, 16, 3, 9, 3, steel, 32)
+    fill(img, (32, 22, 44, 23), black)
+    fill(img, (44, 22, 56, 23), black)
+    # piernas y botas
+    paint_box_noisy(img, 0, 32, 4, 6, 4, dsteel, 33)
+    paint_box_noisy(img, 16, 32, 4, 6, 4, dsteel, 34)
+    paint_box_noisy(img, 64, 32, 5, 2, 5, dpurple, 35, edge=black)
+    paint_box_noisy(img, 84, 32, 5, 2, 5, dpurple, 36, edge=black)
+    # pinza (amarilla de obra) y bloque de ladrillos de piedra sujeto
+    paint_box_noisy(img, 32, 32, 4, 2, 5, (236, 186, 34, 255), 37, edge=(160, 120, 10, 255))
+    for name, (x0, y0, x1, y1) in box_faces(32, 40, 4, 4, 4).items():
+        noisy(img, (x0, y0, x1, y1), (128, 128, 128, 255), seed=38)
+        for x in range(x0, x1):
+            img.putpixel((x, y0 + (y1 - y0) // 2), (90, 90, 90, 255))
+        img.putpixel((x0 + 1, y0), (90, 90, 90, 255))
+        img.putpixel((x0 + 3 if x1 - x0 > 3 else x0, y0 + (y1 - y0) // 2 + 1), (90, 90, 90, 255))
+    return img, glow
+
+
+def builder_icon():
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    fill(img, (7, 0, 9, 1), (255, 220, 90, 255))           # bombilla
+    fill(img, (4, 1, 12, 7), (150, 152, 162, 255))         # cabeza
+    fill(img, (4, 1, 12, 2), (122, 62, 196, 255))
+    fill(img, (5, 3, 11, 4), (120, 255, 200, 255))         # visera
+    fill(img, (3, 7, 13, 12), (122, 62, 196, 255))         # cuerpo
+    fill(img, (3, 10, 13, 11), (120, 78, 40, 255))         # cinturón
+    fill(img, (7, 10, 9, 11), (200, 170, 60, 255))
+    fill(img, (4, 12, 7, 16), (70, 40, 110, 255))          # botas
+    fill(img, (9, 12, 12, 16), (70, 40, 110, 255))
+    fill(img, (12, 8, 16, 12), (128, 128, 128, 255))       # bloque sujeto
+    fill(img, (12, 10, 16, 11), (90, 90, 90, 255))
+    return img
+
+
 def miner_icon():
     img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     fill(img, (4, 1, 12, 3), (236, 186, 34, 255))          # casco
@@ -224,8 +313,8 @@ def miner_icon():
 
 
 for kind in ("builder", "miner"):
-    tex, glow = robot(kind) if kind == "builder" else miner()
+    tex, glow = builder() if kind == "builder" else miner()
     tex.save(os.path.join(ROOT, "entity", f"{kind}_robot.png"))
     glow.save(os.path.join(ROOT, "entity", f"{kind}_robot_glow.png"))
-    (icon(kind) if kind == "builder" else miner_icon()).save(os.path.join(ROOT, "item", f"{kind}_robot.png"))
+    (builder_icon() if kind == "builder" else miner_icon()).save(os.path.join(ROOT, "item", f"{kind}_robot.png"))
 print("Texturas generadas")
