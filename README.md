@@ -46,7 +46,8 @@ Cuándo se detiene:
 - Si se le llena el inventario, **no rompe el bloque** (no se pierde nada), vuelve a su punto de trabajo y se pausa. Vacíalo con **Recoger** y pulsa **Seguir**.
 
 ## Limitaciones de la versión 0.1.0 (honestas)
-- El minero no puede trepar en vertical: si un bloque está justo encima de él y fuera de su alcance, lo salta. Si cae por un agujero del que no puede salir, se queda donde está (tiene 1 minuto para volver).
+- Para **trepar** en vertical hace una torre: salta y pone un bloque bajo sus pies, igual que un jugador. Usa roca, tierra, pizarra, etc. de su inventario, pero nunca el material que estás pidiendo. Si no tiene, te avisa.
+- Si se queda atascado al volver (por ejemplo en un agujero), cava o trepa hasta su puesto. Tiene 3 minutos; si no lo consigue, se queda donde está.
 - No recibe daño por caídas, por asfixia ni por ahogarse; sí recibe daño de la lava y de los monstruos.
 - Respeta las protecciones de otros mods (lanza el evento de romper bloque de Forge). Nunca toca bloques con contenido, como cofres u hornos, ni bloques irrompibles.
 - **Multijugador:** todas las órdenes las comprueba y las ejecuta el servidor. Aun así, cualquier jugador puede abrir cualquier robot (no hay sistema de dueños con permisos), y no está probado en un servidor real.

@@ -10,6 +10,7 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
@@ -59,10 +60,12 @@ public class MinerRobotEntity extends BaseRobotEntity {
     public static final int MIN_AMOUNT = 1, MAX_AMOUNT = INVENTORY_SIZE * 64;
     private static final int SCAN_PER_TICK = 2048;   // bloques revisados por tick (límite de rendimiento)
     private static final int MINE_INTERVAL = 10;     // ticks entre bloque y bloque
+    private static final List<Item> FILLERS = List.of(Items.COBBLESTONE, Items.COBBLED_DEEPSLATE, Items.DIRT,
+            Items.NETHERRACK, Items.ANDESITE, Items.DIORITE, Items.GRANITE, Items.TUFF, Items.BLACKSTONE, Items.STONE, Items.DEEPSLATE);
     private static final double REACH = 3.5D;            // distancia a la que puede picar
     private static final int STUCK_LIMIT = 60;           // ticks sin acercarse = atascado
     private static final int MAX_TICKS_PER_TARGET = 2400; // 2 minutos por bloque como máximo
-    private static final int RETURN_LIMIT = 1200;         // 1 minuto para volver
+    private static final int RETURN_LIMIT = 3600;         // 3 minutos para volver
 
     private final SimpleContainer sample = new SimpleContainer(1);
     private int materialIndex = MiningMaterials.defaultIndex();
@@ -89,6 +92,9 @@ public class MinerRobotEntity extends BaseRobotEntity {
     private double bestDist = Double.MAX_VALUE;
     private JobState afterReturn = JobState.FINISHED;
     private int returnTicks;
+    @Nullable
+    private BlockPos pillarFrom;
+    private int pillarTicks;
     private int cooldown;
     @Nullable
     private ItemStack tool;
@@ -367,6 +373,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
     private void resetTracking() {
         tunneling = false;
         stepDest = null;
+        pillarFrom = null;
         targetTicks = 0;
         stuckTicks = 0;
         bestDist = Double.MAX_VALUE;
@@ -448,7 +455,9 @@ public class MinerRobotEntity extends BaseRobotEntity {
         if (!tunneling) {
             walkTowards(current);
         } else {
-            tunnelTick(level);
+            if (!tunnelTick(level, current)) {
+                skipCurrent(true);
+            }
         }
     }
 
@@ -477,7 +486,15 @@ public class MinerRobotEntity extends BaseRobotEntity {
      * Túnel en escalera: cava 1 casilla hacia el objetivo (2 bloques de alto),
      * subiendo o bajando un bloque si hace falta, y luego camina a esa casilla.
      */
-    private void tunnelTick(ServerLevel level) {
+    /**
+     * Avanza un paso hacia "goal": cava un túnel en escalera (2 bloques de alto), o,
+     * si el objetivo está justo encima, trepa haciendo una torre bajo sus pies.
+     * Devuelve false si no puede avanzar más.
+     */
+    private boolean tunnelTick(ServerLevel level, BlockPos goal) {
+        if (pillarFrom != null) {
+            return pillarTick(level);
+        }
         if (stepDest != null) {
             if (isSameBlockPos(blockPosition(), stepDest)) {
                 stepDest = null;
@@ -486,17 +503,14 @@ public class MinerRobotEntity extends BaseRobotEntity {
                 if (getNavigation().isDone()) {
                     getNavigation().moveTo(stepDest.getX() + 0.5D, stepDest.getY(), stepDest.getZ() + 0.5D, 1.0D);
                 }
-                if (++stuckTicks > STUCK_LIMIT * 2) {
-                    skipCurrent(true);
-                }
-                return;
+                return ++stuckTicks <= STUCK_LIMIT * 2;
             }
         }
+        BlockPos feet = blockPosition();
         List<BlockPos> toClear = new ArrayList<>(3);
-        BlockPos dest = planStep(blockPosition(), current, toClear);
+        BlockPos dest = planStep(feet, goal, toClear);
         if (dest == null || touchesFluid(level, dest) || isLava(level, dest.below())) {
-            skipCurrent(true);
-            return;
+            return false;
         }
         for (BlockPos cell : toClear) {
             BlockState s = level.getBlockState(cell);
@@ -504,18 +518,71 @@ public class MinerRobotEntity extends BaseRobotEntity {
                 continue; // ya está libre
             }
             if (touchesFluid(level, cell) || !canBreak(level, cell, s)) {
-                skipCurrent(true);
-                return;
+                return false;
             }
             if (cooldown > 0) {
-                return;
+                return true;
             }
             cooldown = MINE_INTERVAL;
-            breakAndCollect(level, cell, s, matches(s));
-            return; // un bloque cada vez
+            return breakAndCollect(level, cell, s, matches(s)) || jobState.isActive(); // un bloque cada vez
+        }
+        if (isSameBlockPos(dest, feet.above())) {
+            // Trepar: saltar y poner un bloque debajo.
+            if (findFiller() == null) {
+                notifyStatus(RobotStatus.NO_FILLER);
+                return false;
+            }
+            pillarFrom = feet;
+            pillarTicks = 0;
+            return true;
         }
         stepDest = dest;
         stuckTicks = 0;
+        return true;
+    }
+
+    /** Bloque de relleno para trepar: roca, tierra... nunca el material que se está contando. */
+    @Nullable
+    private Item findFiller() {
+        for (Item item : FILLERS) {
+            if (item != activeCounted && countItem(item) > 0) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private boolean pillarTick(ServerLevel level) {
+        BlockPos from = pillarFrom;
+        if (++pillarTicks > 60) {
+            pillarFrom = null;
+            return false;
+        }
+        if (getY() >= from.getY() + 1.0D) {
+            BlockState there = level.getBlockState(from);
+            Item filler = findFiller();
+            if (filler == null) {
+                pillarFrom = null;
+                notifyStatus(RobotStatus.NO_FILLER);
+                return false;
+            }
+            if (there.isAir() || (there.canBeReplaced() && there.getFluidState().isEmpty())) {
+                BlockState block = Block.byItem(filler).defaultBlockState();
+                if (removeOne(filler)) {
+                    level.setBlock(from, block, Block.UPDATE_ALL);
+                    level.playSound(null, from, block.getSoundType(level, from, this).getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
+                    swing(InteractionHand.MAIN_HAND);
+                }
+            }
+            pillarFrom = null;
+            stuckTicks = 0;
+            return true;
+        }
+        if (onGround() && pillarTicks % 10 == 1) {
+            getNavigation().stop();
+            getJumpControl().jump();
+        }
+        return true;
     }
 
     @Nullable
@@ -528,7 +595,11 @@ public class MinerRobotEntity extends BaseRobotEntity {
                 toClear.add(feet.below());
                 return feet.below();
             }
-            return null; // justo encima y fuera de alcance: no sabe trepar
+            if (dy > 0) {
+                toClear.add(feet.above(2)); // hueco para la cabeza al subir
+                return feet.above();          // trepar haciendo una torre
+            }
+            return null;
         }
         Direction dir = Math.abs(dx) >= Math.abs(dz)
                 ? (dx > 0 ? Direction.EAST : Direction.WEST)
@@ -561,6 +632,11 @@ public class MinerRobotEntity extends BaseRobotEntity {
             return false;
         }
         List<ItemStack> drops = Block.getDrops(state, level, pos, null, this, tool());
+        if (!canFitAll(drops) && jobState == JobState.RETURNING) {
+            getNavigation().stop();
+            setJobState(afterReturn);
+            return false;
+        }
         if (!canFitAll(drops)) {
             if (current != null) {
                 targets.add(current); // lo intentaremos después
@@ -618,8 +694,23 @@ public class MinerRobotEntity extends BaseRobotEntity {
             setJobState(next);
             return;
         }
+        if (tunneling) {
+            if (!(level() instanceof ServerLevel serverLevel) || !tunnelTick(serverLevel, scanCenter)) {
+                getNavigation().stop();
+                setJobState(afterReturn); // no puede volver: se queda donde está
+            }
+            return;
+        }
         if (getNavigation().isDone() && returnTicks % 20 == 1) {
             getNavigation().moveTo(scanCenter.getX() + 0.5D, scanCenter.getY(), scanCenter.getZ() + 0.5D, 1.0D);
+        }
+        if (d < bestDist - 0.25D) {
+            bestDist = d;
+            stuckTicks = 0;
+        } else if (++stuckTicks > STUCK_LIMIT) {
+            getNavigation().stop();
+            tunneling = true; // atascado (por ejemplo en un agujero): cava o trepa
+            stuckTicks = 0;
         }
     }
 

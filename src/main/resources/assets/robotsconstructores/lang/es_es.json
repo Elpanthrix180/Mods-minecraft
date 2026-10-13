@@ -100,5 +100,7 @@
   "status.robotsconstructores.chest_full": "El cofre está lleno: he guardado %s objetos y el resto sigue conmigo.",
   "status.robotsconstructores.chest_full.short": "Cofre lleno",
   "status.robotsconstructores.no_chest": "No encuentro ningún cofre a %s bloques de mi punto de trabajo.",
-  "status.robotsconstructores.no_chest.short": "No hay cofre cerca"
+  "status.robotsconstructores.no_chest.short": "No hay cofre cerca",
+  "status.robotsconstructores.no_filler": "Para trepar necesito roca, tierra o piedra en mi inventario.",
+  "status.robotsconstructores.no_filler.short": "Sin bloques para trepar"
 }
