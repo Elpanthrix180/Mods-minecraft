@@ -21,7 +21,11 @@ public enum BlockRole {
     /** Puerta de madera (opcional: si no hay, se deja el hueco). */
     DOOR(true, s -> s.is(ItemTags.WOODEN_DOORS)),
     /** Escalera de mano (opcional). */
-    LADDER(true, s -> s.is(Items.LADDER));
+    LADDER(true, s -> s.is(Items.LADDER)),
+    /** Camino: el bloque que el jugador pone en la ranura de muestra (se gestiona en el robot). */
+    PATH(false, s -> false),
+    /** Senda de tierra: no gasta materiales. */
+    DIRT_PATH(true, s -> false);
 
     private final boolean optional;
     private final Predicate<ItemStack> accepts;

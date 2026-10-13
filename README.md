@@ -32,6 +32,12 @@ Elige el plano con `<` y `>`. Debajo verás qué materiales necesita.
 **Torre 5×5:** tiene paredes de 10 bloques de alto, puerta, 8 ventanas, escalera de mano por dentro, plataforma arriba con un hueco para subir y almenas.
 - 182 bloques de pared (los mismos materiales que la casa), 8 de cristal, 1 puerta y 10 escaleras de mano. La puerta y las escaleras son opcionales.
 
+**Caminos de cualquier tipo:**
+- **Camino (bloque de muestra):** pon en la ranura de muestra (a la derecha, debajo del nombre del plano) el bloque que quieras: grava, piedra lisa, tablones, ladrillos, losas, cualquiera. Mete en el inventario bloques iguales.
+- **Senda de tierra:** convierte el césped y la tierra en senda, como una pala. No gasta nada.
+- Elige el **largo** (de 4 a 64) y el **ancho** (1, 3 o 5). El camino empieza justo delante del robot y va hacia donde miras.
+- Sigue la forma del terreno: sube y baja hasta 4–5 bloques. Solo cambia suelo natural (césped, tierra, arena, grava, piedra...). Lo que quita lo guarda en su inventario, así que no se pierde nada. Si encuentra un hueco sin suelo, hace un puente a la altura del robot.
+
 Cómo construir:
 1. Mete los materiales en el inventario del robot.
 2. Ponte detrás del robot, mirando hacia donde quieres la construcción, y pulsa **Iniciar**. Construye a 2 bloques delante del robot.

@@ -110,5 +110,17 @@
   "role.robotsconstructores.glass": "cristal",
   "role.robotsconstructores.door": "puerta (opcional)",
   "plan.robotsconstructores.tower_5x5": "Torre 5x5",
-  "role.robotsconstructores.ladder": "escaleras de mano (opcional)"
+  "role.robotsconstructores.ladder": "escaleras de mano (opcional)",
+  "plan.robotsconstructores.path_block": "Camino (bloque de muestra)",
+  "plan.robotsconstructores.path_dirt": "Senda de tierra",
+  "role.robotsconstructores.path": "bloques de la muestra",
+  "role.robotsconstructores.dirt_path": "nada",
+  "gui.robotsconstructores.needs_path": "Necesita: hasta %s bloques como el de la muestra (ranura de la derecha)",
+  "gui.robotsconstructores.needs_dirt_path": "No gasta materiales: convierte el césped en senda",
+  "gui.robotsconstructores.length": "Largo",
+  "gui.robotsconstructores.width": "Ancho",
+  "status.robotsconstructores.no_path_sample": "Pon en la ranura de muestra el bloque del que quieres el camino.",
+  "status.robotsconstructores.no_path_sample.short": "Falta el bloque de muestra",
+  "status.robotsconstructores.no_path_ground": "No encuentro suelo natural delante para hacer el camino.",
+  "status.robotsconstructores.no_path_ground.short": "No hay suelo para el camino"
 }

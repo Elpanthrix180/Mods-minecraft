@@ -3,7 +3,15 @@ package com.robotsconstructores.entity;
 import com.robotsconstructores.building.BlockRole;
 import com.robotsconstructores.building.BuildPlan;
 import com.robotsconstructores.building.BuildPlans;
+import com.robotsconstructores.building.PathPlan;
 import com.robotsconstructores.building.PlannedBlock;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.Containers;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.FakePlayerFactory;
+import net.minecraftforge.event.level.BlockEvent;
 import com.robotsconstructores.menu.BuilderRobotMenu;
 import com.robotsconstructores.registry.ModItems;
 import net.minecraft.core.BlockPos;
@@ -38,8 +46,9 @@ import java.util.Map;
 /** Robot constructor MK-I: construye planos (pared, casa...) bloque a bloque usando su inventario. */
 public class BuilderRobotEntity extends BaseRobotEntity {
     public static final int BUTTON_START = 0, BUTTON_PAUSE = 1, BUTTON_RESUME = 2, BUTTON_CANCEL = 3, BUTTON_TAKE_ALL = 4,
-            BUTTON_PREV_PLAN = 5, BUTTON_NEXT_PLAN = 6;
-    public static final int DATA_COUNT = 5;
+            BUTTON_PREV_PLAN = 5, BUTTON_NEXT_PLAN = 6, BUTTON_LENGTH_DOWN = 7, BUTTON_LENGTH_UP = 8,
+            BUTTON_WIDTH_DOWN = 9, BUTTON_WIDTH_UP = 10;
+    public static final int DATA_COUNT = 7;
     private static final int PLACE_INTERVAL = 10; // ticks entre bloque y bloque (medio segundo)
 
     private BuildPlan plan = BuildPlans.STONE_WALL;
@@ -48,6 +57,9 @@ public class BuilderRobotEntity extends BaseRobotEntity {
     private Direction facing = Direction.NORTH;
     private int nextIndex;
     private int cooldown;
+    private final SimpleContainer sample = new SimpleContainer(1);
+    private int pathLength = PathPlan.DEFAULT_LENGTH;
+    private int pathWidth = PathPlan.DEFAULT_WIDTH;
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -55,9 +67,11 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             return switch (index) {
                 case 0 -> jobState.ordinal();
                 case 1 -> nextIndex;
-                case 2 -> blocks.isEmpty() ? plan.size() : blocks.size();
+                case 2 -> blocks.isEmpty() ? (plan instanceof PathPlan ? pathLength * pathWidth : plan.size()) : blocks.size();
                 case 3 -> status.ordinal();
                 case 4 -> BuildPlans.indexOf(plan);
+                case 5 -> pathLength;
+                case 6 -> pathWidth;
                 default -> 0;
             };
         }
@@ -87,7 +101,22 @@ public class BuilderRobotEntity extends BaseRobotEntity {
 
     @Override
     protected AbstractContainerMenu createMenu(int containerId, Inventory playerInventory) {
-        return new BuilderRobotMenu(containerId, playerInventory, this, inventory, data);
+        return new BuilderRobotMenu(containerId, playerInventory, this, inventory, sample, data);
+    }
+
+    public SimpleContainer getSample() {
+        return sample;
+    }
+
+    @Override
+    protected void dropExtraContents() {
+        Containers.dropContents(level(), this, sample);
+    }
+
+    @Nullable
+    private Item sampleBlockItem() {
+        ItemStack s = sample.getItem(0);
+        return s.getItem() instanceof BlockItem ? s.getItem() : null;
     }
 
     @Override
@@ -100,6 +129,10 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             case BUTTON_TAKE_ALL -> notifyStatus(giveAllTo(player) ? RobotStatus.TRANSFERRED : RobotStatus.TRANSFER_PARTIAL);
             case BUTTON_PREV_PLAN -> changePlan(-1);
             case BUTTON_NEXT_PLAN -> changePlan(1);
+            case BUTTON_LENGTH_DOWN -> changePathSize(-4, 0);
+            case BUTTON_LENGTH_UP -> changePathSize(4, 0);
+            case BUTTON_WIDTH_DOWN -> changePathSize(0, -2);
+            case BUTTON_WIDTH_UP -> changePathSize(0, 2);
             default -> {
             }
         }
@@ -114,6 +147,16 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         status = RobotStatus.READY;
     }
 
+    private void changePathSize(int dLength, int dWidth) {
+        if (jobState.isActive() || jobState == JobState.PAUSED) {
+            notifyStatus(RobotStatus.BUSY);
+            return;
+        }
+        pathLength = Math.max(PathPlan.MIN_LENGTH, Math.min(PathPlan.MAX_LENGTH, pathLength + dLength));
+        pathWidth = Math.max(PathPlan.MIN_WIDTH, Math.min(PathPlan.MAX_WIDTH, pathWidth + dWidth));
+        status = RobotStatus.READY;
+    }
+
     private Component planName() {
         return Component.translatable(plan.translationKey());
     }
@@ -121,6 +164,10 @@ public class BuilderRobotEntity extends BaseRobotEntity {
     // ---------- materiales ----------
 
     private int countRole(BlockRole role) {
+        if (role == BlockRole.PATH) {
+            Item item = sampleBlockItem();
+            return item == null ? 0 : countItem(item);
+        }
         int total = 0;
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack s = inventory.getItem(i);
@@ -134,6 +181,10 @@ public class BuilderRobotEntity extends BaseRobotEntity {
     /** Primer material del inventario que sirve para este papel (o para su papel de reserva). */
     @Nullable
     private Item findMaterial(BlockRole role) {
+        if (role == BlockRole.PATH) {
+            Item item = sampleBlockItem();
+            return item != null && countItem(item) > 0 ? item : null;
+        }
         for (BlockRole r = role; r != null; r = r.fallback()) {
             for (int i = 0; i < inventory.getContainerSize(); i++) {
                 ItemStack s = inventory.getItem(i);
@@ -187,10 +238,25 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         BlockState current = level.getBlockState(pos);
         boolean free = current.isAir() || (current.canBeReplaced() && current.getFluidState().isEmpty());
         return free && isSafeToTouch(current)
-                && level.isUnobstructed(net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), pos, CollisionContext.empty());
+                && level.isUnobstructed(Blocks.STONE.defaultBlockState(), pos, CollisionContext.empty());
     }
 
     private boolean canPlace(Level level, PlannedBlock b) {
+        if (b.role() == BlockRole.PATH || b.role() == BlockRole.DIRT_PATH) {
+            BlockPos p = b.pos();
+            if (!level.isLoaded(p) || isOwnSpace(p)) {
+                return false;
+            }
+            BlockState st = level.getBlockState(p);
+            BlockState above = level.getBlockState(p.above());
+            boolean aboveOpen = above.isAir() || (above.canBeReplaced() && above.getFluidState().isEmpty());
+            if (b.role() == BlockRole.DIRT_PATH) {
+                return (PathPlan.isShovelable(st) || st.is(Blocks.DIRT_PATH)) && aboveOpen;
+            }
+            boolean open = st.isAir() || (st.canBeReplaced() && st.getFluidState().isEmpty());
+            return (open || PathPlan.isGround(st) || (sampleBlockItem() != null && st.is(Block.byItem(sampleBlockItem()))))
+                    && isSafeToTouch(st);
+        }
         return canPlaceAt(level, b.pos()) && (b.role() != BlockRole.DOOR || canPlaceAt(level, b.pos().above()));
     }
 
@@ -206,7 +272,20 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             return;
         }
         Level level = level();
-        List<PlannedBlock> list = plan.blocks(blockPosition(), playerFacing);
+        List<PlannedBlock> list;
+        if (plan instanceof PathPlan path) {
+            if (!path.isDirtPath() && sampleBlockItem() == null) {
+                notifyStatus(RobotStatus.NO_PATH_SAMPLE);
+                return;
+            }
+            list = path.survey(level, blockPosition(), playerFacing, pathLength, pathWidth);
+            if (list.isEmpty()) {
+                notifyStatus(RobotStatus.NO_PATH_GROUND);
+                return;
+            }
+        } else {
+            list = plan.blocks(blockPosition(), playerFacing);
+        }
         for (PlannedBlock b : list) {
             if (!canPlace(level, b)) {
                 notifyStatus(RobotStatus.ZONE_BLOCKED, b.pos().getX(), b.pos().getY(), b.pos().getZ());
@@ -283,6 +362,10 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         if (!level.isLoaded(pos)) {
             return; // esperamos a que el chunk esté cargado
         }
+        if (planned.role() == BlockRole.DIRT_PATH || planned.role() == BlockRole.PATH) {
+            pathTick(level, planned);
+            return;
+        }
         Item material = findMaterial(planned.role());
         if (material == null) {
             if (planned.role().isOptional()) {
@@ -324,6 +407,67 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         }
     }
 
+    /** Un bloque de camino: cambia el suelo (guardando lo que suelta) o hace senda de tierra. */
+    private void pathTick(ServerLevel level, PlannedBlock planned) {
+        BlockPos pos = planned.pos();
+        BlockState current = level.getBlockState(pos);
+        boolean dirt = planned.role() == BlockRole.DIRT_PATH;
+        Item material = dirt ? null : findMaterial(BlockRole.PATH);
+        BlockState target = dirt ? Blocks.DIRT_PATH.defaultBlockState() : material != null ? Block.byItem(material).defaultBlockState() : null;
+        if (target != null && current.is(target.getBlock())) {
+            nextIndex++; // ya está hecho
+            cooldown = 1;
+            checkFinished();
+            return;
+        }
+        if (!dirt && material == null) {
+            setJobState(JobState.PAUSED);
+            notifyStatus(RobotStatus.NO_MATERIALS, Math.max(1, missingMaterials(nextIndex)), blocks.size() - nextIndex);
+            return;
+        }
+        if (!canPlace(level, planned)) {
+            setJobState(JobState.PAUSED);
+            notifyStatus(RobotStatus.ZONE_BLOCKED, pos.getX(), pos.getY(), pos.getZ());
+            return;
+        }
+        boolean replacing = !(current.isAir() || current.canBeReplaced());
+        if (replacing && MinecraftForge.EVENT_BUS.post(
+                new BlockEvent.BreakEvent(level, pos, current, FakePlayerFactory.getMinecraft(level)))) {
+            setJobState(JobState.PAUSED); // zona protegida
+            notifyStatus(RobotStatus.ZONE_BLOCKED, pos.getX(), pos.getY(), pos.getZ());
+            return;
+        }
+        if (dirt) {
+            level.setBlock(pos, target, Block.UPDATE_ALL);
+            level.playSound(null, pos, SoundEvents.SHOVEL_FLATTEN, SoundSource.BLOCKS, 1.0F, 1.0F);
+        } else {
+            if (!removeOne(material)) {
+                return;
+            }
+            if (replacing) {
+                // el bloque quitado (tierra, arena...) se guarda: no se pierde nada
+                for (ItemStack drop : Block.getDrops(current, level, pos, null)) {
+                    ItemStack rest = inventory.addItem(drop);
+                    if (!rest.isEmpty()) {
+                        Containers.dropItemStack(level, getX(), getY() + 0.5D, getZ(), rest);
+                    }
+                }
+            }
+            level.setBlock(pos, target, Block.UPDATE_ALL);
+            level.playSound(null, pos, target.getSoundType(level, pos, this).getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
+        }
+        getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        swing(InteractionHand.MAIN_HAND);
+        nextIndex++;
+        checkFinished();
+    }
+
+    private void checkFinished() {
+        if (nextIndex >= blocks.size()) {
+            finish();
+        }
+    }
+
     private void finish() {
         setJobState(JobState.FINISHED);
         notifyStatus(RobotStatus.BUILD_DONE, planName(), blocks.size());
@@ -337,7 +481,17 @@ public class BuilderRobotEntity extends BaseRobotEntity {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("Plan", plan.id());
-        tag.putBoolean("HasJob", !blocks.isEmpty());
+        long[] posArr = new long[blocks.size()];
+        int[] roleArr = new int[blocks.size()];
+        for (int i = 0; i < blocks.size(); i++) {
+            posArr[i] = blocks.get(i).pos().asLong();
+            roleArr[i] = blocks.get(i).role().ordinal();
+        }
+        tag.putLongArray("JobBlocks", posArr);
+        tag.putIntArray("JobRoles", roleArr);
+        tag.put("Sample", saveContainer(sample));
+        tag.putInt("PathLength", pathLength);
+        tag.putInt("PathWidth", pathWidth);
         tag.putLong("Origin", origin.asLong());
         tag.putInt("Facing", facing.get3DDataValue());
         tag.putInt("NextIndex", nextIndex);
@@ -352,8 +506,19 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         facing = d.getAxis().isHorizontal() ? d : Direction.NORTH;
         nextIndex = tag.getInt("NextIndex");
         blocks.clear();
-        if (tag.getBoolean("HasJob")) {
-            blocks.addAll(plan.blocks(origin, facing)); // el plano se recalcula igual que al empezar
+        long[] posArr = tag.getLongArray("JobBlocks");
+        int[] roleArr = tag.getIntArray("JobRoles");
+        BlockRole[] roles = BlockRole.values();
+        for (int i = 0; i < posArr.length && i < roleArr.length; i++) {
+            int r = roleArr[i];
+            if (r >= 0 && r < roles.length) {
+                blocks.add(new PlannedBlock(BlockPos.of(posArr[i]), roles[r]));
+            }
+        }
+        loadContainer(sample, tag.getList("Sample", net.minecraft.nbt.Tag.TAG_COMPOUND));
+        if (tag.contains("PathLength")) {
+            pathLength = Math.max(PathPlan.MIN_LENGTH, Math.min(PathPlan.MAX_LENGTH, tag.getInt("PathLength")));
+            pathWidth = Math.max(PathPlan.MIN_WIDTH, Math.min(PathPlan.MAX_WIDTH, tag.getInt("PathWidth")));
         }
         if (blocks.isEmpty() && (jobState.isActive() || jobState == JobState.PAUSED)) {
             setJobState(JobState.IDLE);
