@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IAI",
+    "RPR",
+    "IKI"
+  ],
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "A": { "item": "minecraft:amethyst_shard" },
+    "R": { "item": "minecraft:redstone" },
+    "P": { "item": "minecraft:piston" },
+    "K": { "item": "minecraft:iron_pickaxe" }
+  },
+  "result": { "item": "robotsconstructores:miner_robot", "count": 1 }
+}

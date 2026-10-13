@@ -43,6 +43,7 @@ public class RobotsConstructores {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES || event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
             event.accept(ModItems.BUILDER_ROBOT.get());
             event.accept(ModItems.MINER_ROBOT.get());
+            event.accept(ModItems.ROBOT_WAND.get());
         }
     }
 }

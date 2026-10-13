@@ -153,5 +153,17 @@
   "status.robotsconstructores.strip_started": "Minería en tiras: busco %s (objetivo %s) con un túnel de %s bloques y galerías a los lados.",
   "status.robotsconstructores.strip_started.short": "Cavando túneles...",
   "status.robotsconstructores.strip_done": "Túnel terminado: he conseguido %s de %s (%s).",
-  "status.robotsconstructores.strip_done.short": "Túnel terminado"
+  "status.robotsconstructores.strip_done.short": "Túnel terminado",
+  "item.robotsconstructores.robot_wand": "Varita de Robots",
+  "wand.robotsconstructores.busy": "Ese robot está trabajando. Cancela o termina su trabajo primero.",
+  "wand.robotsconstructores.full": "La varita está llena (máximo %s robots).",
+  "wand.robotsconstructores.stored": "Guardado: %s (%s/%s)",
+  "wand.robotsconstructores.empty": "La varita no tiene robots. Haz clic derecho sobre un robot para guardarlo.",
+  "wand.robotsconstructores.cannot_place": "No puedo poner el robot aquí.",
+  "wand.robotsconstructores.released": "Colocado: %s",
+  "wand.robotsconstructores.selected": "Elegido: %s (%s/%s)",
+  "wand.robotsconstructores.tooltip.count": "Robots guardados: %s/%s",
+  "wand.robotsconstructores.tooltip.help1": "Clic derecho a un robot: guardarlo",
+  "wand.robotsconstructores.tooltip.help2": "Clic derecho a un bloque: sacar el elegido",
+  "wand.robotsconstructores.tooltip.help3": "Mayús + clic derecho al aire: elegir otro"
 }

@@ -10,6 +10,28 @@ Mod para **Minecraft Java 1.20.1** con **Forge 47.x** (Java 17).
 4. Copia el `.jar` dentro de esa carpeta.
 5. Abre el launcher de Minecraft, elige el perfil **forge 1.20.1** y pulsa Jugar.
 
+## Recetas (mesa de crafteo)
+
+**Varita de Robots** (palo abajo a la izquierda, en diagonal):
+```
+ .  E  A        A = fragmento de amatista
+ .  R  E        E = perla de ender
+ S  .  .        R = redstone,  S = palo
+```
+**Robot Constructor:**
+```
+ I A I          I = lingote de hierro, A = fragmento de amatista
+ R P R          R = redstone, P = pistón
+ I B I          B = ladrillos
+```
+**Robot Minero:** igual, pero con un **pico de hierro** en lugar de los ladrillos.
+
+## Varita de Robots
+- **Clic derecho sobre un robot:** lo guarda dentro de la varita, con todo su inventario y su configuración. Caben hasta 8. (Si está trabajando o en pausa, primero cancela o deja que termine.)
+- **Clic derecho sobre un bloque:** saca el robot elegido y lo pone ahí.
+- **Mayús + clic derecho al aire:** elige otro de los robots guardados.
+- Pasa el ratón por encima de la varita para ver qué robots lleva. La varita brilla cuando tiene robots y no se quema en la lava.
+
 ## Cómo se usa
 
 Los dos robots están en la pestaña creativa **Herramientas y utilidades** (y también en la de huevos de generación).

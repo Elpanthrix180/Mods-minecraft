@@ -131,6 +131,9 @@ public abstract class BaseRobotEntity extends PathfinderMob {
         if (hand != InteractionHand.MAIN_HAND) {
             return InteractionResult.PASS;
         }
+        if (player.getItemInHand(hand).getItem() instanceof com.robotsconstructores.item.RobotWandItem) {
+            return InteractionResult.PASS; // la varita se encarga (guardar el robot)
+        }
         if (level().isClientSide) {
             return InteractionResult.SUCCESS;
         }
