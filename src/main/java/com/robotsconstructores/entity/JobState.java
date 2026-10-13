@@ -2,10 +2,10 @@ package com.robotsconstructores.entity;
 
 /** Estado del trabajo de un robot. */
 public enum JobState {
-    IDLE, SCANNING, WORKING, PAUSED, FINISHED;
+    IDLE, SCANNING, WORKING, PAUSED, FINISHED, RETURNING;
 
     public boolean isActive() {
-        return this == SCANNING || this == WORKING;
+        return this == SCANNING || this == WORKING || this == RETURNING;
     }
 
     public static JobState byOrdinal(int i) {

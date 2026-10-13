@@ -5,6 +5,11 @@ import com.robotsconstructores.mining.MiningMaterial;
 import com.robotsconstructores.mining.MiningMaterials;
 import com.robotsconstructores.registry.ModItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -33,10 +38,7 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Deque;
 import java.util.List;
 
 /**
@@ -52,7 +54,10 @@ public class MinerRobotEntity extends BaseRobotEntity {
     public static final int MIN_AMOUNT = 1, MAX_AMOUNT = INVENTORY_SIZE * 64;
     private static final int SCAN_PER_TICK = 2048;   // bloques revisados por tick (límite de rendimiento)
     private static final int MINE_INTERVAL = 10;     // ticks entre bloque y bloque
-    private static final int MAX_SKIPS_PER_TICK = 16;
+    private static final double REACH = 3.5D;            // distancia a la que puede picar
+    private static final int STUCK_LIMIT = 60;           // ticks sin acercarse = atascado
+    private static final int MAX_TICKS_PER_TARGET = 2400; // 2 minutos por bloque como máximo
+    private static final int RETURN_LIMIT = 1200;         // 1 minuto para volver
 
     private final SimpleContainer sample = new SimpleContainer(1);
     private int materialIndex = MiningMaterials.defaultIndex();
@@ -67,7 +72,17 @@ public class MinerRobotEntity extends BaseRobotEntity {
     private BlockPos scanCenter = BlockPos.ZERO;
     private int scanRadius;
     private int scanCursor;
-    private final Deque<BlockPos> targets = new ArrayDeque<>();
+    private final List<BlockPos> targets = new ArrayList<>();
+    @Nullable
+    private BlockPos current;
+    private boolean tunneling;
+    @Nullable
+    private BlockPos stepDest;
+    private int targetTicks;
+    private int stuckTicks;
+    private double bestDist = Double.MAX_VALUE;
+    private JobState afterReturn = JobState.FINISHED;
+    private int returnTicks;
     private int cooldown;
     @Nullable
     private ItemStack tool;
@@ -227,6 +242,8 @@ public class MinerRobotEntity extends BaseRobotEntity {
         activeCounted = material.countedItem();
         obtained = 0;
         targets.clear();
+        current = null;
+        resetTracking();
         scanCenter = blockPosition();
         scanRadius = radius;
         scanCursor = 0;
@@ -239,6 +256,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
             notifyStatus(RobotStatus.NOT_WORKING);
             return;
         }
+        getNavigation().stop();
         setJobState(JobState.PAUSED);
         notifyStatus(RobotStatus.PAUSED);
     }
@@ -258,6 +276,8 @@ public class MinerRobotEntity extends BaseRobotEntity {
             return;
         }
         targets.clear();
+        current = null;
+        resetTracking();
         setJobState(JobState.IDLE);
         notifyStatus(RobotStatus.CANCELLED);
     }
@@ -275,14 +295,15 @@ public class MinerRobotEntity extends BaseRobotEntity {
 
     @Override
     protected void workTick(ServerLevel level) {
-        if (jobState == JobState.SCANNING) {
-            scanTick(level);
-        } else if (jobState == JobState.WORKING) {
-            if (--cooldown > 0) {
-                return;
+        if (cooldown > 0) {
+            cooldown--;
+        }
+        switch (jobState) {
+            case SCANNING -> scanTick(level);
+            case WORKING -> workingTick(level);
+            case RETURNING -> returningTick();
+            default -> {
             }
-            cooldown = MINE_INTERVAL;
-            mineTick(level);
         }
     }
 
@@ -310,77 +331,283 @@ public class MinerRobotEntity extends BaseRobotEntity {
                 notifyStatus(RobotStatus.NO_TARGETS, activeName(), scanRadius);
                 return;
             }
-            // primero los más cercanos al robot
-            List<BlockPos> sorted = new ArrayList<>(targets);
-            sorted.sort(Comparator.comparingDouble(p -> p.distSqr(scanCenter)));
-            targets.clear();
-            targets.addAll(sorted);
             cooldown = MINE_INTERVAL;
             setJobState(JobState.WORKING);
             notifyStatus(RobotStatus.TARGETS_FOUND, targets.size(), activeName());
         }
     }
 
-    private void mineTick(ServerLevel level) {
+    /** Elige el bloque objetivo más cercano a donde está ahora el robot. */
+    @Nullable
+    private BlockPos pickNearest() {
+        int best = -1;
+        double bestDist = Double.MAX_VALUE;
+        BlockPos here = blockPosition();
+        for (int i = 0; i < targets.size(); i++) {
+            double d = targets.get(i).distSqr(here);
+            if (d < bestDist) {
+                bestDist = d;
+                best = i;
+            }
+        }
+        return best < 0 ? null : targets.remove(best);
+    }
+
+    private void resetTracking() {
+        tunneling = false;
+        stepDest = null;
+        targetTicks = 0;
+        stuckTicks = 0;
+        bestDist = Double.MAX_VALUE;
+        getNavigation().stop();
+    }
+
+    private void skipCurrent(boolean warn) {
+        if (warn && current != null) {
+            notifyStatus(RobotStatus.TARGET_SKIPPED, current.getX(), current.getY(), current.getZ());
+        }
+        current = null;
+        resetTracking();
+    }
+
+    private boolean inReach(BlockPos pos) {
+        return getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) <= REACH * REACH;
+    }
+
+    private static boolean canBreak(ServerLevel level, BlockPos pos, BlockState state) {
+        return isSafeToTouch(state) && state.getDestroySpeed(level, pos) >= 0 && state.getFluidState().isEmpty();
+    }
+
+    private static boolean isLava(ServerLevel level, BlockPos pos) {
+        return level.getFluidState(pos).is(FluidTags.LAVA);
+    }
+
+    /** ¿Hay agua o lava tocando esta casilla? Entonces no cavamos ahí (seguridad). */
+    private static boolean touchesFluid(ServerLevel level, BlockPos pos) {
+        for (Direction d : Direction.values()) {
+            if (!level.getFluidState(pos.relative(d)).isEmpty()) {
+                return true;
+            }
+        }
+        return !level.getFluidState(pos).isEmpty();
+    }
+
+    private void workingTick(ServerLevel level) {
         if (obtained >= targetAmount) {
             finishDone();
             return;
         }
-        FakePlayer fakePlayer = FakePlayerFactory.getMinecraft(level);
-        for (int attempt = 0; attempt < MAX_SKIPS_PER_TICK; attempt++) {
-            BlockPos pos = targets.peekFirst();
-            if (pos == null) {
-                break;
-            }
-            if (!level.isLoaded(pos)) {
-                targets.pollFirst();
-                continue;
-            }
-            BlockState state = level.getBlockState(pos);
-            // Solo el material elegido; nada de bloques con contenido (cofres, etc.) ni irrompibles.
-            if (!matches(state) || !isSafeToTouch(state) || state.getDestroySpeed(level, pos) < 0) {
-                targets.pollFirst();
-                continue;
-            }
-            // Respeta protecciones de otros mods (zonas protegidas).
-            if (MinecraftForge.EVENT_BUS.post(new BlockEvent.BreakEvent(level, pos, state, fakePlayer))) {
-                targets.pollFirst();
-                continue;
-            }
-            List<ItemStack> drops = Block.getDrops(state, level, pos, null, this, tool());
-            if (!canFitAll(drops)) {
-                setJobState(JobState.PAUSED);
-                notifyStatus(RobotStatus.INVENTORY_FULL, obtained, targetAmount);
+        if (current == null) {
+            resetTracking();
+            current = pickNearest();
+            if (current == null) {
+                notifyStatus(RobotStatus.NOT_ENOUGH_FOUND, obtained, targetAmount, activeName());
+                beginReturn(JobState.FINISHED);
                 return;
             }
-            targets.pollFirst();
-            state.spawnAfterBreak(level, pos, tool(), true);
-            level.destroyBlock(pos, false, this);
-            for (ItemStack drop : drops) {
-                if (activeCounted == null || drop.is(activeCounted)) {
-                    obtained += drop.getCount();
-                }
-                ItemStack rest = inventory.addItem(drop);
-                if (!rest.isEmpty()) {
-                    // No debería pasar (ya se comprobó el espacio), pero nunca perdemos objetos.
-                    Containers.dropItemStack(level, getX(), getY() + 0.5D, getZ(), rest);
+        }
+        if (!level.isLoaded(current)) {
+            skipCurrent(false);
+            return;
+        }
+        BlockState state = level.getBlockState(current);
+        if (!matches(state) || !canBreak(level, current, state)) {
+            skipCurrent(false); // ya no está o no se puede romper
+            return;
+        }
+        if (++targetTicks > MAX_TICKS_PER_TARGET) {
+            skipCurrent(true);
+            return;
+        }
+        if (inReach(current)) {
+            getNavigation().stop();
+            getLookControl().setLookAt(Vec3.atCenterOf(current));
+            if (cooldown > 0) {
+                return;
+            }
+            cooldown = MINE_INTERVAL;
+            if (breakAndCollect(level, current, state, true)) {
+                current = null;
+                if (obtained >= targetAmount) {
+                    finishDone();
                 }
             }
-            swing(InteractionHand.MAIN_HAND);
-            break;
+            return;
         }
-        if (obtained >= targetAmount) {
-            finishDone();
-        } else if (targets.isEmpty()) {
-            setJobState(JobState.FINISHED);
-            notifyStatus(RobotStatus.NOT_ENOUGH_FOUND, obtained, targetAmount, activeName());
+        if (!tunneling) {
+            walkTowards(current);
+        } else {
+            tunnelTick(level);
+        }
+    }
+
+    /** Camina usando las rutas normales de Minecraft. Si no avanza, pasa a cavar un túnel. */
+    private void walkTowards(BlockPos target) {
+        if (getNavigation().isDone()) {
+            boolean ok = getNavigation().moveTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D, 1.0D);
+            if (!ok) {
+                tunneling = true;
+                stuckTicks = 0;
+                return;
+            }
+        }
+        double d = distanceToSqr(Vec3.atCenterOf(target));
+        if (d < bestDist - 0.25D) {
+            bestDist = d;
+            stuckTicks = 0;
+        } else if (++stuckTicks > STUCK_LIMIT) {
+            getNavigation().stop();
+            tunneling = true;
+            stuckTicks = 0;
+        }
+    }
+
+    /**
+     * Túnel en escalera: cava 1 casilla hacia el objetivo (2 bloques de alto),
+     * subiendo o bajando un bloque si hace falta, y luego camina a esa casilla.
+     */
+    private void tunnelTick(ServerLevel level) {
+        if (stepDest != null) {
+            if (isSameBlockPos(blockPosition(), stepDest)) {
+                stepDest = null;
+                stuckTicks = 0;
+            } else {
+                if (getNavigation().isDone()) {
+                    getNavigation().moveTo(stepDest.getX() + 0.5D, stepDest.getY(), stepDest.getZ() + 0.5D, 1.0D);
+                }
+                if (++stuckTicks > STUCK_LIMIT * 2) {
+                    skipCurrent(true);
+                }
+                return;
+            }
+        }
+        List<BlockPos> toClear = new ArrayList<>(3);
+        BlockPos dest = planStep(blockPosition(), current, toClear);
+        if (dest == null || touchesFluid(level, dest) || isLava(level, dest.below())) {
+            skipCurrent(true);
+            return;
+        }
+        for (BlockPos cell : toClear) {
+            BlockState s = level.getBlockState(cell);
+            if (s.isAir() || (s.getCollisionShape(level, cell).isEmpty() && s.getFluidState().isEmpty())) {
+                continue; // ya está libre
+            }
+            if (touchesFluid(level, cell) || !canBreak(level, cell, s)) {
+                skipCurrent(true);
+                return;
+            }
+            if (cooldown > 0) {
+                return;
+            }
+            cooldown = MINE_INTERVAL;
+            breakAndCollect(level, cell, s, matches(s));
+            return; // un bloque cada vez
+        }
+        stepDest = dest;
+        stuckTicks = 0;
+    }
+
+    @Nullable
+    private static BlockPos planStep(BlockPos feet, BlockPos target, List<BlockPos> toClear) {
+        int dx = target.getX() - feet.getX();
+        int dy = target.getY() - feet.getY();
+        int dz = target.getZ() - feet.getZ();
+        if (dx == 0 && dz == 0) {
+            if (dy < 0) {
+                toClear.add(feet.below());
+                return feet.below();
+            }
+            return null; // justo encima y fuera de alcance: no sabe trepar
+        }
+        Direction dir = Math.abs(dx) >= Math.abs(dz)
+                ? (dx > 0 ? Direction.EAST : Direction.WEST)
+                : (dz > 0 ? Direction.SOUTH : Direction.NORTH);
+        BlockPos f = feet.relative(dir);
+        if (dy > 0) {
+            toClear.add(feet.above(2));
+            toClear.add(f.above());
+            toClear.add(f.above(2));
+            return f.above();
+        } else if (dy < 0) {
+            toClear.add(f.above());
+            toClear.add(f);
+            toClear.add(f.below());
+            return f.below();
+        }
+        toClear.add(f.above());
+        toClear.add(f);
+        return f;
+    }
+
+    /**
+     * Rompe un bloque de verdad y guarda lo que suelta.
+     * Devuelve false si no se ha roto (inventario lleno o zona protegida).
+     */
+    private boolean breakAndCollect(ServerLevel level, BlockPos pos, BlockState state, boolean count) {
+        FakePlayer fakePlayer = FakePlayerFactory.getMinecraft(level);
+        if (MinecraftForge.EVENT_BUS.post(new BlockEvent.BreakEvent(level, pos, state, fakePlayer))) {
+            skipCurrent(true); // protegido por otro mod
+            return false;
+        }
+        List<ItemStack> drops = Block.getDrops(state, level, pos, null, this, tool());
+        if (!canFitAll(drops)) {
+            if (current != null) {
+                targets.add(current); // lo intentaremos después
+            }
+            notifyStatus(RobotStatus.INVENTORY_FULL, obtained, targetAmount);
+            beginReturn(JobState.PAUSED);
+            return false;
+        }
+        state.spawnAfterBreak(level, pos, tool(), true);
+        level.destroyBlock(pos, false, this);
+        for (ItemStack drop : drops) {
+            if (count && (activeCounted == null || drop.is(activeCounted))) {
+                obtained += drop.getCount();
+            }
+            ItemStack rest = inventory.addItem(drop);
+            if (!rest.isEmpty()) {
+                // No debería pasar (ya se comprobó el espacio), pero nunca perdemos objetos.
+                Containers.dropItemStack(level, getX(), getY() + 0.5D, getZ(), rest);
+            }
+        }
+        swing(InteractionHand.MAIN_HAND);
+        return true;
+    }
+
+    private void beginReturn(JobState after) {
+        afterReturn = after;
+        current = null;
+        resetTracking();
+        returnTicks = 0;
+        setJobState(JobState.RETURNING);
+        notifyStatus(RobotStatus.RETURNING);
+    }
+
+    private void returningTick() {
+        double d = distanceToSqr(Vec3.atBottomCenterOf(scanCenter));
+        if (d <= 2.25D || ++returnTicks > RETURN_LIMIT) {
+            getNavigation().stop();
+            setJobState(afterReturn);
+            return;
+        }
+        if (getNavigation().isDone() && returnTicks % 20 == 1) {
+            getNavigation().moveTo(scanCenter.getX() + 0.5D, scanCenter.getY(), scanCenter.getZ() + 0.5D, 1.0D);
         }
     }
 
     private void finishDone() {
         targets.clear();
-        setJobState(JobState.FINISHED);
         notifyStatus(RobotStatus.MINE_DONE, obtained, activeName(), targetAmount);
+        beginReturn(JobState.FINISHED);
+    }
+
+    /** No se hace daño al cavar: ni asfixia en paredes, ni caídas, ni ahogo. */
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.FALL) || source.is(DamageTypes.DROWN)) {
+            return false;
+        }
+        return super.hurt(source, amount);
     }
 
     // ---------- guardado ----------
@@ -416,6 +643,10 @@ public class MinerRobotEntity extends BaseRobotEntity {
             arr[i++] = p.asLong();
         }
         tag.putLongArray("Targets", arr);
+        if (current != null) {
+            tag.putLong("Current", current.asLong());
+        }
+        tag.putString("AfterReturn", afterReturn.name());
     }
 
     @Override
@@ -444,6 +675,14 @@ public class MinerRobotEntity extends BaseRobotEntity {
         targets.clear();
         for (long l : tag.getLongArray("Targets")) {
             targets.add(BlockPos.of(l));
+        }
+        if (tag.contains("Current")) {
+            targets.add(BlockPos.of(tag.getLong("Current"))); // se vuelve a elegir al cargar
+        }
+        try {
+            afterReturn = JobState.valueOf(tag.getString("AfterReturn"));
+        } catch (IllegalArgumentException e) {
+            afterReturn = JobState.FINISHED;
         }
         if ((jobState.isActive() || jobState == JobState.PAUSED) && activeBlocks.isEmpty()) {
             setJobState(JobState.IDLE);

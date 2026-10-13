@@ -31,17 +31,21 @@ Los dos robots están en la pestaña creativa **Herramientas y utilidades** (y t
    Con **Muestra** se mina el bloque que pongas en la ranura de muestra (sirve cualquier bloque).
 2. Escribe la **cantidad** (de 1 a 1728) y pulsa **OK**.
 3. Elige el **radio** (de 2 a 16 bloques) con `-` y `+`.
-4. Pulsa **Iniciar**. El robot revisa la zona poco a poco (sin congelar el juego) y después rompe los bloques de verdad, uno cada medio segundo.
+4. Pulsa **Iniciar**. El robot revisa la zona poco a poco (sin congelar el juego) y después **camina hasta el bloque más cercano** y lo rompe de verdad.
+   - Si el bloque está enterrado, cava un **túnel en escalera** de 2 bloques de alto hasta él. Lo que suelta al cavar también se guarda, pero no cuenta para el objetivo.
+   - No cava junto al agua ni a la lava. Si no puede llegar a un bloque en 2 minutos, lo salta y te avisa.
+   - Al terminar, o si se llena, **vuelve a su punto de trabajo**.
 
 **Regla de conteo:** se cuentan los objetos reales que caen. Por ejemplo, para el diamante se cuentan diamantes; para la piedra, roca; para el hierro, hierro en bruto. Con la opción Muestra se cuentan todos los objetos que caen. El robot rompe el bloque con un pico de diamante interno **sin Fortuna**. Algunos minerales sueltan varias unidades (redstone, lapislázuli, cobre), así que el total puede pasarse un poco del objetivo, pero nunca empieza un bloque nuevo cuando ya ha llegado.
 
 Cuándo se detiene:
 - Si alcanza el objetivo, termina.
 - Si se acaban los bloques de la zona, termina y te dice cuántas unidades ha conseguido.
-- Si se le llena el inventario, se **pausa sin romper el bloque** (no se pierde nada). Vacíalo con **Recoger** y pulsa **Seguir**.
+- Si se le llena el inventario, **no rompe el bloque** (no se pierde nada), vuelve a su punto de trabajo y se pausa. Vacíalo con **Recoger** y pulsa **Seguir**.
 
 ## Limitaciones de la versión 0.1.0 (honestas)
-- **El minero no camina.** Se queda quieto y extrae a distancia los bloques que hay dentro de su radio. Para que se mueva por túneles hace falta añadir: búsqueda de rutas por túneles, excavar el camino, volver al punto de trabajo y descargar en cofres.
+- El minero no puede trepar en vertical: si un bloque está justo encima de él y fuera de su alcance, lo salta. Si cae por un agujero del que no puede salir, se queda donde está (tiene 1 minuto para volver).
+- No recibe daño por caídas, por asfixia ni por ahogarse; sí recibe daño de la lava y de los monstruos.
 - **Todavía no hay cofres conectados.** Para sacar las cosas, usa el inventario del robot (con Mayúsculas + clic, o con el botón Recoger).
 - Respeta las protecciones de otros mods (lanza el evento de romper bloque de Forge). Nunca toca bloques con contenido, como cofres u hornos, ni bloques irrompibles.
 - **Multijugador:** todas las órdenes las comprueba y las ejecuta el servidor. Aun así, cualquier jugador puede abrir cualquier robot (no hay sistema de dueños con permisos), y no está probado en un servidor real.

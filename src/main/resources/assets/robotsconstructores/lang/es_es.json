@@ -72,8 +72,8 @@
   "status.robotsconstructores.zone_blocked.short": "Zona ocupada",
   "status.robotsconstructores.scan_started": "Buscando %s en un radio de %3$s bloques (objetivo: %2$s).",
   "status.robotsconstructores.scan_started.short": "Buscando bloques...",
-  "status.robotsconstructores.targets_found": "He encontrado %s bloques. Empiezo a extraer %s.",
-  "status.robotsconstructores.targets_found.short": "Extrayendo...",
+  "status.robotsconstructores.targets_found": "He encontrado %s bloques. Voy a por %s.",
+  "status.robotsconstructores.targets_found.short": "Caminando y extrayendo...",
   "status.robotsconstructores.no_targets": "No hay %s en un radio de %s bloques.",
   "status.robotsconstructores.no_targets.short": "No hay ese material cerca",
   "status.robotsconstructores.mine_done": "¡Objetivo cumplido! He obtenido %s de %s (objetivo %s).",
@@ -87,5 +87,10 @@
   "status.robotsconstructores.invalid_amount": "Cantidad no válida. Usa un número entre %s y %s.",
   "status.robotsconstructores.invalid_amount.short": "Cantidad no válida",
   "status.robotsconstructores.config_set": "Cantidad objetivo: %s.",
-  "status.robotsconstructores.config_set.short": "Cantidad guardada"
+  "status.robotsconstructores.config_set.short": "Cantidad guardada",
+  "state.robotsconstructores.returning": "Volviendo",
+  "status.robotsconstructores.returning": "Vuelvo a mi punto de trabajo.",
+  "status.robotsconstructores.returning.short": "Volviendo al punto de trabajo",
+  "status.robotsconstructores.target_skipped": "No puedo llegar al bloque en %s, %s, %s (agua, lava o protegido). Lo salto.",
+  "status.robotsconstructores.target_skipped.short": "Bloque inalcanzable: lo salto"
 }
