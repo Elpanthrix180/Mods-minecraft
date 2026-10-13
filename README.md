@@ -76,7 +76,15 @@ Cómo construir:
    - Si el bloque está enterrado, cava un **túnel en escalera** de 2 bloques de alto hasta él. Lo que suelta al cavar también se guarda, pero no cuenta para el objetivo.
    - No cava junto al agua ni a la lava. Si no puede llegar a un bloque en 2 minutos, lo salta y te avisa.
    - Al terminar, o si se llena, **vuelve a su punto de trabajo**.
-5. **Guardar en cofres:** pon un cofre o un barril a 4 bloques o menos del sitio donde colocaste el robot, y pulsa el botón **Cofre: No** para que cambie a **Cofre: Sí**.
+5. **Modo Tiras (strip mining):** pulsa el botón **Zona** para que cambie a **Tiras**. Ahora el robot no busca en una zona, sino que:
+   - Cava un **túnel principal** de 2 bloques de alto hacia donde miras tú al pulsar Iniciar. El largo es el valor de **Túnel** (de 8 a 64; se cambia con `-` y `+`).
+   - Cada 3 bloques abre **galerías** de 8 bloques a izquierda y derecha.
+   - Si ve el material elegido en las paredes, el suelo o el techo, lo saca y **sigue la veta**.
+   - Tapa los agujeros del suelo con roca o tierra. Si le das **antorchas**, pone una cada 8 bloques del túnel.
+   - Si una galería llega al agua o a la lava, la deja y pasa a la siguiente.
+   - Termina al llegar a la cantidad pedida o al acabar el túnel, y vuelve a su puesto (guarda en el cofre si está activado).
+   - Consejo: colócalo en la capa del mineral que buscas (por ejemplo, para diamantes, en Y = -58).
+6. **Guardar en cofres:** pon un cofre o un barril a 4 bloques o menos del sitio donde colocaste el robot, y pulsa el botón **Cofre: No** para que cambie a **Cofre: Sí**.
    Cada vez que el robot vuelva a su puesto, guardará todo su almacén en el cofre. Si había vuelto porque estaba lleno, sigue minando él solo. Si el cofre se llena, se queda en pausa y te avisa.
 
 **Regla de conteo:** se cuentan los objetos reales que caen. Por ejemplo, para el diamante se cuentan diamantes; para la piedra, roca; para el hierro, hierro en bruto. Con la opción Muestra se cuentan todos los objetos que caen. El robot rompe el bloque con un pico de diamante interno **sin Fortuna**. Algunos minerales sueltan varias unidades (redstone, lapislázuli, cobre), así que el total puede pasarse un poco del objetivo, pero nunca empieza un bloque nuevo cuando ya ha llegado.

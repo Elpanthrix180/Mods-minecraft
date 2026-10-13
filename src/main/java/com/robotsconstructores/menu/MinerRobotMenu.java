@@ -90,6 +90,10 @@ public class MinerRobotMenu extends RobotMenu {
         return data.get(8) != 0;
     }
 
+    public boolean isStripMode() {
+        return data.get(9) != 0;
+    }
+
     public int getScanPercent() {
         return data.get(7);
     }

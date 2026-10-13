@@ -17,6 +17,7 @@ public class MinerRobotScreen extends RobotScreen<MinerRobotMenu> {
     private EditBox amountBox;
     private int lastServerAmount = -1;
     private Button chestButton;
+    private Button modeButton;
 
     public MinerRobotScreen(MinerRobotMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -31,13 +32,14 @@ public class MinerRobotScreen extends RobotScreen<MinerRobotMenu> {
         button("gui.robotsconstructores.prev", 8, 18, 14, MinerRobotEntity.BUTTON_PREV_MATERIAL);
         button("gui.robotsconstructores.next", 132, 18, 14, MinerRobotEntity.BUTTON_NEXT_MATERIAL);
         // fila cantidad
-        amountBox = new EditBox(font, leftPos + 62, topPos + 40, 44, 14, Component.translatable("gui.robotsconstructores.amount"));
+        amountBox = new EditBox(font, leftPos + 62, topPos + 40, 34, 14, Component.translatable("gui.robotsconstructores.amount"));
         amountBox.setMaxLength(4);
         amountBox.setFilter(s -> s.matches("\\d{0,4}"));
         amountBox.setValue(String.valueOf(menu.getTargetAmount()));
         addRenderableWidget(amountBox);
         addRenderableWidget(Button.builder(Component.translatable("gui.robotsconstructores.apply"), b -> sendAmount())
-                .bounds(leftPos + 110, topPos + 40, 30, 14).build());
+                .bounds(leftPos + 98, topPos + 40, 24, 14).build());
+        modeButton = button("gui.robotsconstructores.mode_zone", 124, 40, 44, MinerRobotEntity.BUTTON_TOGGLE_MODE);
         // fila radio
         button("gui.robotsconstructores.minus", 62, 58, 14, MinerRobotEntity.BUTTON_RADIUS_DOWN);
         button("gui.robotsconstructores.plus", 110, 58, 14, MinerRobotEntity.BUTTON_RADIUS_UP);
@@ -66,6 +68,8 @@ public class MinerRobotScreen extends RobotScreen<MinerRobotMenu> {
     protected void containerTick() {
         super.containerTick();
         amountBox.tick();
+        modeButton.setMessage(Component.translatable(menu.isStripMode()
+                ? "gui.robotsconstructores.mode_strip" : "gui.robotsconstructores.mode_zone"));
         chestButton.setMessage(Component.translatable(menu.isUsingChest()
                 ? "gui.robotsconstructores.chest_on" : "gui.robotsconstructores.chest_off"));
         int server = menu.getTargetAmount();
@@ -115,8 +119,13 @@ public class MinerRobotScreen extends RobotScreen<MinerRobotMenu> {
         g.drawCenteredString(font, name, 77, 21, TEXT);
 
         g.drawString(font, Component.translatable("gui.robotsconstructores.amount"), 8, 43, TEXT_DIM, false);
-        g.drawString(font, Component.translatable("gui.robotsconstructores.radius"), 8, 61, TEXT_DIM, false);
-        g.drawCenteredString(font, String.valueOf(menu.getRadius()), 93, 61, TEXT);
+        if (menu.isStripMode()) {
+            g.drawString(font, Component.translatable("gui.robotsconstructores.tunnel"), 8, 61, TEXT_DIM, false);
+            g.drawCenteredString(font, String.valueOf(menu.getRadius() * MinerRobotEntity.STRIP_LENGTH_PER_RADIUS), 93, 61, TEXT);
+        } else {
+            g.drawString(font, Component.translatable("gui.robotsconstructores.radius"), 8, 61, TEXT_DIM, false);
+            g.drawCenteredString(font, String.valueOf(menu.getRadius()), 93, 61, TEXT);
+        }
 
         int obtained = menu.getObtained();
         int target = menu.getTargetAmount();

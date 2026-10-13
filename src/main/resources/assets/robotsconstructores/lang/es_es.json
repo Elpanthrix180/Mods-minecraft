@@ -146,5 +146,12 @@
   "status.robotsconstructores.missing_items": "Me faltan materiales: %s",
   "status.robotsconstructores.missing_items.short": "Faltan materiales (mira el chat)",
   "plan.robotsconstructores.gable_house_7x7": "Casa con techo en pico",
-  "role.robotsconstructores.roof_stairs": "escaleras para el tejado"
+  "role.robotsconstructores.roof_stairs": "escaleras para el tejado",
+  "gui.robotsconstructores.mode_zone": "Zona",
+  "gui.robotsconstructores.mode_strip": "Tiras",
+  "gui.robotsconstructores.tunnel": "Túnel:",
+  "status.robotsconstructores.strip_started": "Minería en tiras: busco %s (objetivo %s) con un túnel de %s bloques y galerías a los lados.",
+  "status.robotsconstructores.strip_started.short": "Cavando túneles...",
+  "status.robotsconstructores.strip_done": "Túnel terminado: he conseguido %s de %s (%s).",
+  "status.robotsconstructores.strip_done.short": "Túnel terminado"
 }

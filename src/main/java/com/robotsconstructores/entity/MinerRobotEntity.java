@@ -35,6 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
@@ -53,8 +54,10 @@ import java.util.List;
  */
 public class MinerRobotEntity extends BaseRobotEntity {
     public static final int BUTTON_START = 0, BUTTON_PAUSE = 1, BUTTON_RESUME = 2, BUTTON_CANCEL = 3,
-            BUTTON_PREV_MATERIAL = 4, BUTTON_NEXT_MATERIAL = 5, BUTTON_RADIUS_DOWN = 6, BUTTON_RADIUS_UP = 7, BUTTON_TAKE_ALL = 8, BUTTON_TOGGLE_CHEST = 9;
-    public static final int DATA_COUNT = 9;
+            BUTTON_PREV_MATERIAL = 4, BUTTON_NEXT_MATERIAL = 5, BUTTON_RADIUS_DOWN = 6, BUTTON_RADIUS_UP = 7, BUTTON_TAKE_ALL = 8, BUTTON_TOGGLE_CHEST = 9, BUTTON_TOGGLE_MODE = 10;
+    public static final int DATA_COUNT = 10;
+    public static final int STRIP_LENGTH_PER_RADIUS = 4; // largo del túnel = radio x 4
+    public static final int BRANCH_LENGTH = 8, BRANCH_EVERY = 3, TORCH_EVERY = 8;
     public static final int CHEST_RANGE = 4; // distancia máxima al cofre desde el punto de trabajo
     public static final int MIN_RADIUS = 2, MAX_RADIUS = 16, RADIUS_STEP = 2;
     public static final int MIN_AMOUNT = 1, MAX_AMOUNT = INVENTORY_SIZE * 64;
@@ -72,6 +75,12 @@ public class MinerRobotEntity extends BaseRobotEntity {
     private int targetAmount = 32;
     private int radius = 8;
     private boolean useChest;
+    // minería en tiras
+    private boolean stripMode;
+    private final List<BlockPos> stripCells = new ArrayList<>();
+    private final List<Integer> stripBranch = new ArrayList<>(); // 0 = túnel principal, n = galería n
+    private int stripIndex;
+    private final List<BlockPos> pendingOres = new ArrayList<>();
 
     // trabajo en curso
     private final List<Block> activeBlocks = new ArrayList<>();
@@ -112,6 +121,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
                 case 6 -> Math.min(targets.size(), Short.MAX_VALUE);
                 case 7 -> scanProgressPercent();
                 case 8 -> useChest ? 1 : 0;
+                case 9 -> stripMode ? 1 : 0;
                 default -> 0;
             };
         }
@@ -177,7 +187,13 @@ public class MinerRobotEntity extends BaseRobotEntity {
     @Override
     public void handleButton(int id, ServerPlayer player) {
         switch (id) {
-            case BUTTON_START -> start();
+            case BUTTON_START -> start(player.getDirection());
+            case BUTTON_TOGGLE_MODE -> {
+                if (canConfigure()) {
+                    stripMode = !stripMode;
+                    status = RobotStatus.READY;
+                }
+            }
             case BUTTON_PAUSE -> pause();
             case BUTTON_RESUME -> resume();
             case BUTTON_CANCEL -> cancel();
@@ -240,7 +256,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
         return activeCounted != null ? activeCounted.getDescription() : activeBlocks.get(0).getName();
     }
 
-    private void start() {
+    private void start(Direction playerFacing) {
         if (jobState.isActive()) {
             notifyStatus(RobotStatus.BUSY);
             return;
@@ -262,6 +278,13 @@ public class MinerRobotEntity extends BaseRobotEntity {
         current = null;
         resetTracking();
         scanCenter = blockPosition();
+        if (stripMode) {
+            planStrips(playerFacing);
+            cooldown = MINE_INTERVAL;
+            setJobState(JobState.WORKING);
+            notifyStatus(RobotStatus.STRIP_STARTED, activeName(), targetAmount, radius * STRIP_LENGTH_PER_RADIUS);
+            return;
+        }
         scanRadius = radius;
         scanCursor = 0;
         setJobState(JobState.SCANNING);
@@ -283,7 +306,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
             notifyStatus(RobotStatus.NOT_PAUSED);
             return;
         }
-        setJobState(scanCursor < scanTotal() ? JobState.SCANNING : JobState.WORKING);
+        setJobState(!stripMode && scanCursor < scanTotal() ? JobState.SCANNING : JobState.WORKING);
         notifyStatus(RobotStatus.RESUMED);
     }
 
@@ -410,7 +433,158 @@ public class MinerRobotEntity extends BaseRobotEntity {
         return !level.getFluidState(pos).isEmpty();
     }
 
+    // ---------- minería en tiras ----------
+
+    /** Túnel principal hacia delante y galerías a los lados cada BRANCH_EVERY bloques (ida y vuelta). */
+    private void planStrips(Direction facing) {
+        stripCells.clear();
+        stripBranch.clear();
+        pendingOres.clear();
+        stripIndex = 0;
+        int length = radius * STRIP_LENGTH_PER_RADIUS;
+        Direction right = facing.getClockWise();
+        int branch = 0;
+        for (int i = 1; i <= length; i++) {
+            BlockPos main = scanCenter.relative(facing, i);
+            stripCells.add(main);
+            stripBranch.add(0);
+            if (i % BRANCH_EVERY == 0) {
+                for (int sign = -1; sign <= 1; sign += 2) {
+                    branch++;
+                    for (int j = 1; j <= BRANCH_LENGTH; j++) {
+                        stripCells.add(main.relative(right, sign * j));
+                        stripBranch.add(branch);
+                    }
+                    stripCells.add(main);   // volver al túnel principal
+                    stripBranch.add(branch);
+                }
+            }
+        }
+    }
+
+    /** Si una galería no se puede seguir (agua, lava, protegido...), se pasa a la siguiente. */
+    private void skipStripBranch() {
+        int branch = stripBranch.get(stripIndex);
+        if (branch == 0) {
+            stripIndex = stripCells.size(); // el túnel principal está bloqueado: se termina
+            return;
+        }
+        while (stripIndex < stripCells.size() && stripBranch.get(stripIndex) == branch) {
+            stripIndex++;
+        }
+        stuckTicks = 0;
+        getNavigation().stop();
+    }
+
+    /** Apunta los bloques del material que quedan a la vista alrededor de una posición (vetas). */
+    private void addVisibleOres(ServerLevel level, BlockPos pos) {
+        for (Direction d : Direction.values()) {
+            BlockPos n = pos.relative(d);
+            if (pendingOres.size() < 64 && !pendingOres.contains(n) && level.isLoaded(n) && matches(level.getBlockState(n))) {
+                pendingOres.add(n.immutable());
+            }
+        }
+    }
+
+    private static boolean isOpenCell(ServerLevel level, BlockPos pos) {
+        BlockState s = level.getBlockState(pos);
+        return s.isAir() || (s.getCollisionShape(level, pos).isEmpty() && s.getFluidState().isEmpty());
+    }
+
+    private void stripTick(ServerLevel level) {
+        // 1) primero el mineral que ha quedado a la vista (siguiendo la veta)
+        while (!pendingOres.isEmpty()) {
+            BlockPos ore = pendingOres.get(0);
+            BlockState st = level.getBlockState(ore);
+            if (!matches(st) || !canBreak(level, ore, st) || touchesFluid(level, ore) || !inReach(ore)) {
+                pendingOres.remove(0);
+                continue;
+            }
+            getNavigation().stop();
+            getLookControl().setLookAt(Vec3.atCenterOf(ore));
+            if (cooldown > 0) {
+                return;
+            }
+            cooldown = MINE_INTERVAL;
+            if (breakAndCollect(level, ore, st, true)) {
+                pendingOres.remove(0);
+                addVisibleOres(level, ore);
+                if (obtained >= targetAmount) {
+                    finishDone();
+                }
+            }
+            return;
+        }
+        if (stripIndex >= stripCells.size()) {
+            notifyStatus(RobotStatus.STRIP_DONE, obtained, targetAmount, activeName());
+            beginReturn(JobState.FINISHED);
+            return;
+        }
+        BlockPos cell = stripCells.get(stripIndex);
+        // 2) ¿ya ha llegado a la casilla? mira las paredes, pone suelo y antorcha
+        if (isSameBlockPos(blockPosition(), cell)) {
+            addVisibleOres(level, cell);
+            addVisibleOres(level, cell.above());
+            if (stripBranch.get(stripIndex) == 0 && cell.distManhattan(scanCenter) % TORCH_EVERY == 0
+                    && countItem(Items.TORCH) > 0 && level.getBlockState(cell).isAir()
+                    && Blocks.TORCH.defaultBlockState().canSurvive(level, cell) && removeOne(Items.TORCH)) {
+                level.setBlock(cell, Blocks.TORCH.defaultBlockState(), Block.UPDATE_ALL);
+            }
+            stripIndex++;
+            stuckTicks = 0;
+            return;
+        }
+        if (touchesFluid(level, cell) || touchesFluid(level, cell.above())) {
+            skipStripBranch();
+            return;
+        }
+        // 3) cavar la casilla (2 de alto)
+        for (BlockPos c : new BlockPos[]{cell.above(), cell}) {
+            if (isOpenCell(level, c)) {
+                continue;
+            }
+            BlockState s = level.getBlockState(c);
+            if (!canBreak(level, c, s)) {
+                skipStripBranch();
+                return;
+            }
+            getLookControl().setLookAt(Vec3.atCenterOf(c));
+            if (cooldown > 0) {
+                return;
+            }
+            cooldown = MINE_INTERVAL;
+            breakAndCollect(level, c, s, matches(s));
+            if (obtained >= targetAmount) {
+                finishDone();
+            }
+            return;
+        }
+        // 4) tapar huecos del suelo con roca/tierra para no caerse
+        BlockPos floor = cell.below();
+        if (isOpenCell(level, floor) && !isLava(level, floor)) {
+            Item filler = findFiller();
+            if (filler != null && removeOne(filler)) {
+                level.setBlock(floor, Block.byItem(filler).defaultBlockState(), Block.UPDATE_ALL);
+            }
+        }
+        // 5) caminar hasta la casilla
+        if (getNavigation().isDone()) {
+            getNavigation().moveTo(cell.getX() + 0.5D, cell.getY(), cell.getZ() + 0.5D, 1.0D);
+        }
+        if (++stuckTicks > STUCK_LIMIT * 2) {
+            skipStripBranch();
+        }
+    }
+
     private void workingTick(ServerLevel level) {
+        if (stripMode) {
+            if (obtained >= targetAmount) {
+                finishDone();
+            } else {
+                stripTick(level);
+            }
+            return;
+        }
         if (obtained >= targetAmount) {
             finishDone();
             return;
@@ -789,6 +963,21 @@ public class MinerRobotEntity extends BaseRobotEntity {
         tag.putInt("TargetAmount", targetAmount);
         tag.putInt("Radius", radius);
         tag.putBoolean("UseChest", useChest);
+        tag.putBoolean("StripMode", stripMode);
+        long[] cells = new long[stripCells.size()];
+        int[] branches = new int[stripCells.size()];
+        for (int i = 0; i < cells.length; i++) {
+            cells[i] = stripCells.get(i).asLong();
+            branches[i] = stripBranch.get(i);
+        }
+        tag.putLongArray("StripCells", cells);
+        tag.putIntArray("StripBranch", branches);
+        tag.putInt("StripIndex", stripIndex);
+        long[] ores = new long[pendingOres.size()];
+        for (int i = 0; i < ores.length; i++) {
+            ores[i] = pendingOres.get(i).asLong();
+        }
+        tag.putLongArray("PendingOres", ores);
         tag.putInt("Obtained", obtained);
         ListTag blocks = new ListTag();
         for (Block b : activeBlocks) {
@@ -828,6 +1017,20 @@ public class MinerRobotEntity extends BaseRobotEntity {
             targetAmount = Math.max(MIN_AMOUNT, Math.min(MAX_AMOUNT, tag.getInt("TargetAmount")));
             radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, tag.getInt("Radius")));
             useChest = tag.getBoolean("UseChest");
+            stripMode = tag.getBoolean("StripMode");
+            stripCells.clear();
+            stripBranch.clear();
+            long[] cells = tag.getLongArray("StripCells");
+            int[] branches = tag.getIntArray("StripBranch");
+            for (int i = 0; i < cells.length && i < branches.length; i++) {
+                stripCells.add(BlockPos.of(cells[i]));
+                stripBranch.add(branches[i]);
+            }
+            stripIndex = Math.max(0, Math.min(stripCells.size(), tag.getInt("StripIndex")));
+            pendingOres.clear();
+            for (long l : tag.getLongArray("PendingOres")) {
+                pendingOres.add(BlockPos.of(l));
+            }
         }
         obtained = tag.getInt("Obtained");
         activeBlocks.clear();
