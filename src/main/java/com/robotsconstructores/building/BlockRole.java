@@ -26,6 +26,8 @@ public enum BlockRole {
     PATH(false, s -> false),
     /** Senda de tierra: no gasta materiales. */
     DIRT_PATH(true, s -> false),
+    /** Tejado: escaleras de cualquier tipo (si no hay, bloques de estructura). */
+    ROOF_STAIRS(false, s -> s.is(ItemTags.STAIRS)),
     /** Bloque exacto de un plano o imagen (el material se calcula a partir del bloque). */
     BLUEPRINT(false, s -> false);
 
@@ -44,7 +46,7 @@ public enum BlockRole {
     /** Si falta este material, se puede usar el de este otro papel. */
     @Nullable
     public BlockRole fallback() {
-        return this == GLASS ? STRUCTURE : null;
+        return this == GLASS || this == ROOF_STAIRS ? STRUCTURE : null;
     }
 
     public boolean isOptional() {

@@ -8,7 +8,8 @@ public final class BuildPlans {
     private static final List<BuildPlan> PLANS = new ArrayList<>();
 
     public static final BuildPlan STONE_WALL = register(new WallPlan("stone_wall_5x3", 5, 3, 2, BlockRole.STONE_WALL));
-    public static final BuildPlan SMALL_HOUSE = register(new HousePlan("small_house_7x7", 7, 4, 2));
+    public static final BuildPlan SMALL_HOUSE = register(new HousePlan("small_house_7x7", 7, 4, 2, false));
+    public static final BuildPlan GABLE_HOUSE = register(new HousePlan("gable_house_7x7", 7, 4, 2, true));
     public static final BuildPlan PATH = register(new PathPlan("path_block", false));
     public static final BuildPlan DIRT_PATH = register(new PathPlan("path_dirt", true));
     public static final BuildPlan RAMPART = register(new RampartPlan("rampart", 5, 2, 2));

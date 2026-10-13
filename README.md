@@ -29,6 +29,9 @@ Elige el plano con `<` y `>`. Debajo verás qué materiales necesita.
 - Ventanas: cristal. Si no tiene, pone material de pared.
 - Puerta: cualquier puerta de madera (opcional; si no tiene, deja el hueco).
 
+**Casa con techo en pico:** la misma casa, pero con un tejado a dos aguas hecho de escaleras (con alero de 1 bloque) y fachadas triangulares.
+- 114 bloques de pared, 72 escaleras de cualquier tipo para el tejado (si no tienes, usa bloques de pared), 5 de cristal y 1 puerta (opcional).
+
 **Torre 5×5:** tiene paredes de 10 bloques de alto, puerta, 8 ventanas, escalera de mano por dentro, plataforma arriba con un hueco para subir y almenas.
 - 182 bloques de pared (los mismos materiales que la casa), 8 de cristal, 1 puerta y 10 escaleras de mano. La puerta y las escaleras son opcionales.
 
