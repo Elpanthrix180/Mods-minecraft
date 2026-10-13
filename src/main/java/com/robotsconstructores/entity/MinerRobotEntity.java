@@ -10,6 +10,10 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -48,8 +52,9 @@ import java.util.List;
  */
 public class MinerRobotEntity extends BaseRobotEntity {
     public static final int BUTTON_START = 0, BUTTON_PAUSE = 1, BUTTON_RESUME = 2, BUTTON_CANCEL = 3,
-            BUTTON_PREV_MATERIAL = 4, BUTTON_NEXT_MATERIAL = 5, BUTTON_RADIUS_DOWN = 6, BUTTON_RADIUS_UP = 7, BUTTON_TAKE_ALL = 8;
-    public static final int DATA_COUNT = 8;
+            BUTTON_PREV_MATERIAL = 4, BUTTON_NEXT_MATERIAL = 5, BUTTON_RADIUS_DOWN = 6, BUTTON_RADIUS_UP = 7, BUTTON_TAKE_ALL = 8, BUTTON_TOGGLE_CHEST = 9;
+    public static final int DATA_COUNT = 9;
+    public static final int CHEST_RANGE = 4; // distancia máxima al cofre desde el punto de trabajo
     public static final int MIN_RADIUS = 2, MAX_RADIUS = 16, RADIUS_STEP = 2;
     public static final int MIN_AMOUNT = 1, MAX_AMOUNT = INVENTORY_SIZE * 64;
     private static final int SCAN_PER_TICK = 2048;   // bloques revisados por tick (límite de rendimiento)
@@ -63,6 +68,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
     private int materialIndex = MiningMaterials.defaultIndex();
     private int targetAmount = 32;
     private int radius = 8;
+    private boolean useChest;
 
     // trabajo en curso
     private final List<Block> activeBlocks = new ArrayList<>();
@@ -99,6 +105,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
                 case 5 -> status.ordinal();
                 case 6 -> Math.min(targets.size(), Short.MAX_VALUE);
                 case 7 -> scanProgressPercent();
+                case 8 -> useChest ? 1 : 0;
                 default -> 0;
             };
         }
@@ -172,6 +179,10 @@ public class MinerRobotEntity extends BaseRobotEntity {
             case BUTTON_NEXT_MATERIAL -> changeMaterial(1);
             case BUTTON_RADIUS_DOWN -> changeRadius(-RADIUS_STEP);
             case BUTTON_RADIUS_UP -> changeRadius(RADIUS_STEP);
+            case BUTTON_TOGGLE_CHEST -> {
+                useChest = !useChest;
+                status = RobotStatus.READY;
+            }
             case BUTTON_TAKE_ALL -> notifyStatus(giveAllTo(player) ? RobotStatus.TRANSFERRED : RobotStatus.TRANSFER_PARTIAL);
             default -> {
             }
@@ -585,14 +596,81 @@ public class MinerRobotEntity extends BaseRobotEntity {
 
     private void returningTick() {
         double d = distanceToSqr(Vec3.atBottomCenterOf(scanCenter));
-        if (d <= 2.25D || ++returnTicks > RETURN_LIMIT) {
+        boolean arrived = d <= 2.25D;
+        if (arrived || ++returnTicks > RETURN_LIMIT) {
             getNavigation().stop();
-            setJobState(afterReturn);
+            JobState next = afterReturn;
+            if (arrived && useChest && level() instanceof ServerLevel serverLevel) {
+                int moved = depositToChests(serverLevel);
+                boolean empty = isStorageEmpty();
+                if (moved == 0 && !empty && findChests(serverLevel).isEmpty()) {
+                    notifyStatus(RobotStatus.NO_CHEST, CHEST_RANGE);
+                } else if (!empty) {
+                    notifyStatus(RobotStatus.CHEST_FULL, moved);
+                } else {
+                    notifyStatus(RobotStatus.DEPOSITED, moved);
+                    // Había vuelto por tener el inventario lleno: ahora hay sitio, así que sigue.
+                    if (next == JobState.PAUSED && !targets.isEmpty() && obtained < targetAmount) {
+                        next = JobState.WORKING;
+                    }
+                }
+            }
+            setJobState(next);
             return;
         }
         if (getNavigation().isDone() && returnTicks % 20 == 1) {
             getNavigation().moveTo(scanCenter.getX() + 0.5D, scanCenter.getY(), scanCenter.getZ() + 0.5D, 1.0D);
         }
+    }
+
+    /** Cofres, barriles y otros contenedores cerca del robot (los de otros mods también). */
+    private List<IItemHandler> findChests(ServerLevel level) {
+        List<IItemHandler> found = new ArrayList<>();
+        BlockPos here = blockPosition();
+        for (BlockPos pos : BlockPos.betweenClosed(here.offset(-CHEST_RANGE, -2, -CHEST_RANGE), here.offset(CHEST_RANGE, 2, CHEST_RANGE))) {
+            if (!level.isLoaded(pos)) {
+                continue;
+            }
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be == null) {
+                continue;
+            }
+            be.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP).ifPresent(found::add);
+        }
+        return found;
+    }
+
+    /** Mueve el almacén del robot a los cofres cercanos. Devuelve cuántos objetos ha movido. */
+    private int depositToChests(ServerLevel level) {
+        List<IItemHandler> chests = findChests(level);
+        int moved = 0;
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            int before = stack.getCount();
+            ItemStack rest = stack;
+            for (IItemHandler chest : chests) {
+                rest = ItemHandlerHelper.insertItemStacked(chest, rest, false);
+                if (rest.isEmpty()) {
+                    break;
+                }
+            }
+            moved += before - rest.getCount();
+            inventory.setItem(i, rest.isEmpty() ? ItemStack.EMPTY : rest);
+        }
+        inventory.setChanged();
+        return moved;
+    }
+
+    private boolean isStorageEmpty() {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            if (!inventory.getItem(i).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void finishDone() {
@@ -619,6 +697,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
         tag.putInt("MaterialIndex", materialIndex);
         tag.putInt("TargetAmount", targetAmount);
         tag.putInt("Radius", radius);
+        tag.putBoolean("UseChest", useChest);
         tag.putInt("Obtained", obtained);
         ListTag blocks = new ListTag();
         for (Block b : activeBlocks) {
@@ -657,6 +736,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
             materialIndex = Math.floorMod(tag.getInt("MaterialIndex"), MiningMaterials.optionCount());
             targetAmount = Math.max(MIN_AMOUNT, Math.min(MAX_AMOUNT, tag.getInt("TargetAmount")));
             radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, tag.getInt("Radius")));
+            useChest = tag.getBoolean("UseChest");
         }
         obtained = tag.getInt("Obtained");
         activeBlocks.clear();

@@ -86,6 +86,10 @@ public class MinerRobotMenu extends RobotMenu {
         return data.get(6);
     }
 
+    public boolean isUsingChest() {
+        return data.get(8) != 0;
+    }
+
     public int getScanPercent() {
         return data.get(7);
     }

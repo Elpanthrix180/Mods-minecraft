@@ -92,5 +92,13 @@
   "status.robotsconstructores.returning": "Vuelvo a mi punto de trabajo.",
   "status.robotsconstructores.returning.short": "Volviendo al punto de trabajo",
   "status.robotsconstructores.target_skipped": "No puedo llegar al bloque en %s, %s, %s (agua, lava o protegido). Lo salto.",
-  "status.robotsconstructores.target_skipped.short": "Bloque inalcanzable: lo salto"
+  "status.robotsconstructores.target_skipped.short": "Bloque inalcanzable: lo salto",
+  "gui.robotsconstructores.chest_on": "Cofre: Sí",
+  "gui.robotsconstructores.chest_off": "Cofre: No",
+  "status.robotsconstructores.deposited": "He guardado %s objetos en el cofre.",
+  "status.robotsconstructores.deposited.short": "Guardado en el cofre",
+  "status.robotsconstructores.chest_full": "El cofre está lleno: he guardado %s objetos y el resto sigue conmigo.",
+  "status.robotsconstructores.chest_full.short": "Cofre lleno",
+  "status.robotsconstructores.no_chest": "No encuentro ningún cofre a %s bloques de mi punto de trabajo.",
+  "status.robotsconstructores.no_chest.short": "No hay cofre cerca"
 }

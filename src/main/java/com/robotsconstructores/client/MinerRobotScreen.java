@@ -16,6 +16,7 @@ import net.minecraft.world.entity.player.Inventory;
 public class MinerRobotScreen extends RobotScreen<MinerRobotMenu> {
     private EditBox amountBox;
     private int lastServerAmount = -1;
+    private Button chestButton;
 
     public MinerRobotScreen(MinerRobotMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -40,6 +41,8 @@ public class MinerRobotScreen extends RobotScreen<MinerRobotMenu> {
         // fila radio
         button("gui.robotsconstructores.minus", 62, 58, 14, MinerRobotEntity.BUTTON_RADIUS_DOWN);
         button("gui.robotsconstructores.plus", 110, 58, 14, MinerRobotEntity.BUTTON_RADIUS_UP);
+        // destino: cofre cercano o solo el robot
+        chestButton = button("gui.robotsconstructores.chest_off", 128, 58, 40, MinerRobotEntity.BUTTON_TOGGLE_CHEST);
         // órdenes
         button("gui.robotsconstructores.start", 8, 76, 38, MinerRobotEntity.BUTTON_START);
         button("gui.robotsconstructores.pause", 48, 76, 38, MinerRobotEntity.BUTTON_PAUSE);
@@ -63,6 +66,8 @@ public class MinerRobotScreen extends RobotScreen<MinerRobotMenu> {
     protected void containerTick() {
         super.containerTick();
         amountBox.tick();
+        chestButton.setMessage(Component.translatable(menu.isUsingChest()
+                ? "gui.robotsconstructores.chest_on" : "gui.robotsconstructores.chest_off"));
         int server = menu.getTargetAmount();
         if (server != lastServerAmount && !amountBox.isFocused()) {
             amountBox.setValue(String.valueOf(server));
