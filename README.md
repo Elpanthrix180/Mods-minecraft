@@ -20,11 +20,21 @@ Los dos robots están en la pestaña creativa **Herramientas y utilidades** (y t
 - Si el robot muere, suelta todo su inventario.
 
 ### Robot Constructor MK-I
-1. Mete al menos **15 bloques de piedra o de roca** en su inventario.
-2. Mira hacia donde quieres la pared y pulsa **Iniciar**. Construye una pared de 5 × 3 dos bloques delante del robot, en la dirección en la que miras tú.
-3. Coloca un bloque cada medio segundo y gasta los materiales de verdad.
-4. Solo construye sobre aire o plantas que se pueden reemplazar (hierba, flores...). Si hay algo en medio, no empieza o se pausa.
-5. Tiene botones para pausar, seguir y cancelar.
+Elige el plano con `<` y `>`. Debajo verás qué materiales necesita.
+
+**Pared de piedra 5×3:** necesita 15 bloques de piedra o de roca.
+
+**Casa 7×7:** tiene paredes de 4 bloques de alto, techo plano, 4 ventanas y una puerta en el centro de la fachada. El suelo es el propio terreno.
+- Paredes y techo: tablones de cualquier madera, roca, piedra, ladrillos de piedra, ladrillos o pizarra. Puede mezclarlos.
+- Ventanas: cristal. Si no tiene, pone material de pared.
+- Puerta: cualquier puerta de madera (opcional; si no tiene, deja el hueco).
+
+Cómo construir:
+1. Mete los materiales en el inventario del robot.
+2. Ponte detrás del robot, mirando hacia donde quieres la construcción, y pulsa **Iniciar**. Construye a 2 bloques delante del robot.
+3. Pone un bloque cada medio segundo, de abajo arriba, y gasta los materiales de verdad.
+4. Solo construye sobre aire o plantas que se pueden reemplazar. Si hay algo en medio, no empieza y te dice dónde está el estorbo.
+5. Puedes pausar, seguir y cancelar. Si guardas y sales a mitad, al volver sigue donde iba.
 
 ### Robot Minero MK-I
 1. Elige el material con `<` y `>`: piedra, pizarra profunda, carbón, hierro, cobre, oro, redstone, lapislázuli, diamante, esmeralda, cuarzo del Nether, escombros ancestrales o **Muestra**.

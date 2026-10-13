@@ -16,8 +16,8 @@ import net.minecraft.world.inventory.SimpleContainerData;
 import javax.annotation.Nullable;
 
 public class BuilderRobotMenu extends RobotMenu {
-    public static final int STORAGE_TOP = 94;
-    public static final int PLAYER_TOP = 170;
+    public static final int STORAGE_TOP = 104;
+    public static final int PLAYER_TOP = 180;
     private final ContainerData data;
 
     public BuilderRobotMenu(int containerId, Inventory playerInventory, @Nullable BaseRobotEntity robot,
@@ -51,5 +51,9 @@ public class BuilderRobotMenu extends RobotMenu {
 
     public RobotStatus getStatus() {
         return RobotStatus.byOrdinal(data.get(3));
+    }
+
+    public int getPlanIndex() {
+        return data.get(4);
     }
 }

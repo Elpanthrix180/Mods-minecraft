@@ -66,8 +66,8 @@
   "status.robotsconstructores.build_started.short": "Construyendo...",
   "status.robotsconstructores.build_done": "¡Terminado! %s construida con %s bloques.",
   "status.robotsconstructores.build_done.short": "¡Construcción terminada!",
-  "status.robotsconstructores.no_materials": "Faltan materiales: necesito %s bloques más de piedra o roca (total %s).",
-  "status.robotsconstructores.no_materials.short": "Faltan bloques de piedra",
+  "status.robotsconstructores.no_materials": "Faltan materiales: me faltan %s bloques (el plano tiene %s). Mira la lista \"Necesita\".",
+  "status.robotsconstructores.no_materials.short": "Faltan materiales",
   "status.robotsconstructores.zone_blocked": "No puedo construir: hay un bloque en %s, %s, %s. No reemplazo bloques.",
   "status.robotsconstructores.zone_blocked.short": "Zona ocupada",
   "status.robotsconstructores.scan_started": "Buscando %s en un radio de %3$s bloques (objetivo: %2$s).",
@@ -102,5 +102,11 @@
   "status.robotsconstructores.no_chest": "No encuentro ningún cofre a %s bloques de mi punto de trabajo.",
   "status.robotsconstructores.no_chest.short": "No hay cofre cerca",
   "status.robotsconstructores.no_filler": "Para trepar necesito roca, tierra o piedra en mi inventario.",
-  "status.robotsconstructores.no_filler.short": "Sin bloques para trepar"
+  "status.robotsconstructores.no_filler.short": "Sin bloques para trepar",
+  "plan.robotsconstructores.small_house_7x7": "Casa 7x7",
+  "gui.robotsconstructores.needs": "Necesita:",
+  "role.robotsconstructores.stone_wall": "piedra/roca",
+  "role.robotsconstructores.structure": "tablones/roca/ladrillo",
+  "role.robotsconstructores.glass": "cristal",
+  "role.robotsconstructores.door": "puerta (opcional)"
 }
