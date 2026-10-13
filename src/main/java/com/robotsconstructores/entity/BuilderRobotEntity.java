@@ -24,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -307,6 +308,10 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             level.setBlock(pos, lower, Block.UPDATE_ALL);
             level.setBlock(pos.above(), lower.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER), Block.UPDATE_ALL);
             toPlace = lower;
+        } else if (toPlace.getBlock() instanceof LadderBlock) {
+            // pegada a la pared que tiene detrás (en la dirección de construcción)
+            toPlace = toPlace.setValue(LadderBlock.FACING, facing.getOpposite());
+            level.setBlock(pos, toPlace, Block.UPDATE_ALL);
         } else {
             level.setBlock(pos, toPlace, Block.UPDATE_ALL);
         }

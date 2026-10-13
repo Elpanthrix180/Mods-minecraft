@@ -29,6 +29,9 @@ Elige el plano con `<` y `>`. Debajo verás qué materiales necesita.
 - Ventanas: cristal. Si no tiene, pone material de pared.
 - Puerta: cualquier puerta de madera (opcional; si no tiene, deja el hueco).
 
+**Torre 5×5:** tiene paredes de 10 bloques de alto, puerta, 8 ventanas, escalera de mano por dentro, plataforma arriba con un hueco para subir y almenas.
+- 182 bloques de pared (los mismos materiales que la casa), 8 de cristal, 1 puerta y 10 escaleras de mano. La puerta y las escaleras son opcionales.
+
 Cómo construir:
 1. Mete los materiales en el inventario del robot.
 2. Ponte detrás del robot, mirando hacia donde quieres la construcción, y pulsa **Iniciar**. Construye a 2 bloques delante del robot.

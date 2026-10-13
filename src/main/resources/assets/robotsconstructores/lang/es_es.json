@@ -108,5 +108,7 @@
   "role.robotsconstructores.stone_wall": "piedra/roca",
   "role.robotsconstructores.structure": "tablones/roca/ladrillo",
   "role.robotsconstructores.glass": "cristal",
-  "role.robotsconstructores.door": "puerta (opcional)"
+  "role.robotsconstructores.door": "puerta (opcional)",
+  "plan.robotsconstructores.tower_5x5": "Torre 5x5",
+  "role.robotsconstructores.ladder": "escaleras de mano (opcional)"
 }

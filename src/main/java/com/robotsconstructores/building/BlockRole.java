@@ -19,7 +19,9 @@ public enum BlockRole {
     /** Ventanas: cristal. Si no hay, se usa material de estructura. */
     GLASS(false, s -> s.is(Tags.Items.GLASS)),
     /** Puerta de madera (opcional: si no hay, se deja el hueco). */
-    DOOR(true, s -> s.is(ItemTags.WOODEN_DOORS));
+    DOOR(true, s -> s.is(ItemTags.WOODEN_DOORS)),
+    /** Escalera de mano (opcional). */
+    LADDER(true, s -> s.is(Items.LADDER));
 
     private final boolean optional;
     private final Predicate<ItemStack> accepts;

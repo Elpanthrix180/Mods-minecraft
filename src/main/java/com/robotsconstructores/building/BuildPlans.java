@@ -9,6 +9,7 @@ public final class BuildPlans {
 
     public static final BuildPlan STONE_WALL = register(new WallPlan("stone_wall_5x3", 5, 3, 2, BlockRole.STONE_WALL));
     public static final BuildPlan SMALL_HOUSE = register(new HousePlan("small_house_7x7", 7, 4, 2));
+    public static final BuildPlan TOWER = register(new TowerPlan("tower_5x5", 5, 10, 2));
 
     private static BuildPlan register(BuildPlan plan) {
         PLANS.add(plan);
