@@ -4,6 +4,7 @@ import com.robotsconstructores.building.BlockRole;
 import com.robotsconstructores.building.BuildPlan;
 import com.robotsconstructores.building.BuildPlans;
 import com.robotsconstructores.building.PathPlan;
+import com.robotsconstructores.building.RampartPlan;
 import com.robotsconstructores.building.PlannedBlock;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Containers;
@@ -67,7 +68,8 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             return switch (index) {
                 case 0 -> jobState.ordinal();
                 case 1 -> nextIndex;
-                case 2 -> blocks.isEmpty() ? (plan instanceof PathPlan ? pathLength * pathWidth : plan.size()) : blocks.size();
+                case 2 -> blocks.isEmpty() ? (plan instanceof PathPlan ? pathLength * pathWidth
+                        : plan instanceof RampartPlan r ? r.blocks(BlockPos.ZERO, Direction.NORTH, pathLength).size() : plan.size()) : blocks.size();
                 case 3 -> status.ordinal();
                 case 4 -> BuildPlans.indexOf(plan);
                 case 5 -> pathLength;
@@ -283,6 +285,8 @@ public class BuilderRobotEntity extends BaseRobotEntity {
                 notifyStatus(RobotStatus.NO_PATH_GROUND);
                 return;
             }
+        } else if (plan instanceof RampartPlan rampart) {
+            list = rampart.blocks(blockPosition(), playerFacing, pathLength);
         } else {
             list = plan.blocks(blockPosition(), playerFacing);
         }

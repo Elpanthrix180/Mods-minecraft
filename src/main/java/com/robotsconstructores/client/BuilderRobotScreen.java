@@ -4,6 +4,7 @@ import com.robotsconstructores.building.BlockRole;
 import com.robotsconstructores.building.BuildPlan;
 import com.robotsconstructores.building.BuildPlans;
 import com.robotsconstructores.building.PathPlan;
+import com.robotsconstructores.building.RampartPlan;
 import net.minecraft.client.gui.components.Button;
 import com.robotsconstructores.entity.BuilderRobotEntity;
 import com.robotsconstructores.menu.BuilderRobotMenu;
@@ -48,8 +49,10 @@ public class BuilderRobotScreen extends RobotScreen<BuilderRobotMenu> {
     @Override
     protected void containerTick() {
         super.containerTick();
-        boolean path = BuildPlans.byIndex(menu.getPlanIndex()) instanceof PathPlan;
-        lengthDown.visible = lengthUp.visible = widthDown.visible = widthUp.visible = path;
+        BuildPlan plan = BuildPlans.byIndex(menu.getPlanIndex());
+        boolean path = plan instanceof PathPlan;
+        lengthDown.visible = lengthUp.visible = path || plan instanceof RampartPlan;
+        widthDown.visible = widthUp.visible = path;
     }
 
     private Component requirementsText(BuildPlan plan) {
@@ -60,7 +63,8 @@ public class BuilderRobotScreen extends RobotScreen<BuilderRobotMenu> {
         }
         MutableComponent text = Component.translatable("gui.robotsconstructores.needs");
         boolean first = true;
-        for (Map.Entry<BlockRole, Integer> e : plan.requirements().entrySet()) {
+        Map<BlockRole, Integer> req = plan instanceof RampartPlan r ? r.requirements(menu.getPathLength()) : plan.requirements();
+        for (Map.Entry<BlockRole, Integer> e : req.entrySet()) {
             text.append(first ? " " : ", ").append(String.valueOf(e.getValue())).append(" ")
                     .append(Component.translatable(e.getKey().translationKey()));
             first = false;
@@ -77,9 +81,11 @@ public class BuilderRobotScreen extends RobotScreen<BuilderRobotMenu> {
         g.pose().scale(0.75F, 0.75F, 1.0F);
         g.drawString(font, requirementsText(plan), (int) (8 / 0.75F), (int) (33 / 0.75F), TEXT_DIM, false);
         g.pose().popPose();
-        if (plan instanceof PathPlan) {
+        if (plan instanceof PathPlan || plan instanceof RampartPlan) {
             g.drawString(font, Component.translatable("gui.robotsconstructores.length"), 8, 45, TEXT_DIM, false);
             g.drawCenteredString(font, String.valueOf(menu.getPathLength()), 61, 45, TEXT);
+        }
+        if (plan instanceof PathPlan) {
             g.drawString(font, Component.translatable("gui.robotsconstructores.width"), 86, 45, TEXT_DIM, false);
             g.drawCenteredString(font, String.valueOf(menu.getPathWidth()), 134, 45, TEXT);
         }

@@ -32,6 +32,12 @@ Elige el plano con `<` y `>`. Debajo verás qué materiales necesita.
 **Torre 5×5:** tiene paredes de 10 bloques de alto, puerta, 8 ventanas, escalera de mano por dentro, plataforma arriba con un hueco para subir y almenas.
 - 182 bloques de pared (los mismos materiales que la casa), 8 de cristal, 1 puerta y 10 escaleras de mano. La puerta y las escaleras son opcionales.
 
+**Muralla:** muro de 2 bloques de grosor y 5 de alto que va de lado a lado delante del robot.
+- Elige el **largo** (de 4 a 64) con `-` y `+`.
+- Tiene almenas en la cara exterior y una escalera de mano en el centro de la cara interior para subir arriba.
+- Material: el mismo que la casa (tablones, roca, piedra, ladrillos...). Con largo 16 son 168 bloques más 5 escaleras de mano (opcionales).
+- Necesita terreno llano: si hay algo en medio, te dice dónde.
+
 **Caminos de cualquier tipo:**
 - **Camino (bloque de muestra):** pon en la ranura de muestra (a la derecha, debajo del nombre del plano) el bloque que quieras: grava, piedra lisa, tablones, ladrillos, losas, cualquiera. Mete en el inventario bloques iguales.
 - **Senda de tierra:** convierte el césped y la tierra en senda, como una pala. No gasta nada.

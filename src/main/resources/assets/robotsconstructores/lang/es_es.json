@@ -122,5 +122,6 @@
   "status.robotsconstructores.no_path_sample": "Pon en la ranura de muestra el bloque del que quieres el camino.",
   "status.robotsconstructores.no_path_sample.short": "Falta el bloque de muestra",
   "status.robotsconstructores.no_path_ground": "No encuentro suelo natural delante para hacer el camino.",
-  "status.robotsconstructores.no_path_ground.short": "No hay suelo para el camino"
+  "status.robotsconstructores.no_path_ground.short": "No hay suelo para el camino",
+  "plan.robotsconstructores.rampart": "Muralla"
 }

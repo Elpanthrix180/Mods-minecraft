@@ -11,6 +11,7 @@ public final class BuildPlans {
     public static final BuildPlan SMALL_HOUSE = register(new HousePlan("small_house_7x7", 7, 4, 2));
     public static final BuildPlan PATH = register(new PathPlan("path_block", false));
     public static final BuildPlan DIRT_PATH = register(new PathPlan("path_dirt", true));
+    public static final BuildPlan RAMPART = register(new RampartPlan("rampart", 5, 2, 2));
     public static final BuildPlan TOWER = register(new TowerPlan("tower_5x5", 5, 10, 2));
 
     private static BuildPlan register(BuildPlan plan) {
