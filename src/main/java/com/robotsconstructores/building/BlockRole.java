@@ -25,7 +25,9 @@ public enum BlockRole {
     /** Camino: el bloque que el jugador pone en la ranura de muestra (se gestiona en el robot). */
     PATH(false, s -> false),
     /** Senda de tierra: no gasta materiales. */
-    DIRT_PATH(true, s -> false);
+    DIRT_PATH(true, s -> false),
+    /** Bloque exacto de un plano o imagen (el material se calcula a partir del bloque). */
+    BLUEPRINT(false, s -> false);
 
     private final boolean optional;
     private final Predicate<ItemStack> accepts;

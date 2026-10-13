@@ -3,7 +3,11 @@ package com.robotsconstructores.client;
 import com.robotsconstructores.building.BlockRole;
 import com.robotsconstructores.building.BuildPlan;
 import com.robotsconstructores.building.BuildPlans;
+import com.robotsconstructores.building.BlueprintPlan;
 import com.robotsconstructores.building.PathPlan;
+import com.robotsconstructores.network.ModNetwork;
+import com.robotsconstructores.network.SetBlueprintNamePacket;
+import net.minecraft.client.gui.components.EditBox;
 import com.robotsconstructores.building.RampartPlan;
 import net.minecraft.client.gui.components.Button;
 import com.robotsconstructores.entity.BuilderRobotEntity;
@@ -31,6 +35,12 @@ public class BuilderRobotScreen extends RobotScreen<BuilderRobotMenu> {
         lengthUp = button("gui.robotsconstructores.plus", 70, 42, 12, BuilderRobotEntity.BUTTON_LENGTH_UP);
         widthDown = button("gui.robotsconstructores.minus", 116, 42, 12, BuilderRobotEntity.BUTTON_WIDTH_DOWN);
         widthUp = button("gui.robotsconstructores.plus", 140, 42, 12, BuilderRobotEntity.BUTTON_WIDTH_UP);
+        nameBox = new EditBox(font, leftPos + 8, topPos + 42, 108, 14, Component.translatable("gui.robotsconstructores.file_name"));
+        nameBox.setMaxLength(64);
+        nameBox.setHint(Component.translatable("gui.robotsconstructores.file_hint"));
+        addRenderableWidget(nameBox);
+        nameOk = addRenderableWidget(Button.builder(Component.translatable("gui.robotsconstructores.apply"), b -> sendName())
+                .bounds(leftPos + 120, topPos + 42, 30, 14).build());
         button("gui.robotsconstructores.start", 8, 60, 38, BuilderRobotEntity.BUTTON_START);
         button("gui.robotsconstructores.pause", 48, 60, 38, BuilderRobotEntity.BUTTON_PAUSE);
         button("gui.robotsconstructores.resume", 88, 60, 38, BuilderRobotEntity.BUTTON_RESUME);
@@ -44,7 +54,28 @@ public class BuilderRobotScreen extends RobotScreen<BuilderRobotMenu> {
         drawProgress(g, 8, 78, 160, menu.getPlaced(), menu.getTotal());
     }
 
-    private Button lengthDown, lengthUp, widthDown, widthUp;
+    private Button lengthDown, lengthUp, widthDown, widthUp, nameOk;
+    private EditBox nameBox;
+
+    private void sendName() {
+        ModNetwork.CHANNEL.sendToServer(new SetBlueprintNamePacket(menu.containerId, nameBox.getValue()));
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) { // Escape
+            onClose();
+            return true;
+        }
+        if (nameBox.isFocused() && nameBox.visible) {
+            if (keyCode == 257 || keyCode == 335) { // Enter
+                sendName();
+                return true;
+            }
+            return nameBox.keyPressed(keyCode, scanCode, modifiers) || nameBox.canConsumeInput();
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
 
     @Override
     protected void containerTick() {
@@ -53,9 +84,18 @@ public class BuilderRobotScreen extends RobotScreen<BuilderRobotMenu> {
         boolean path = plan instanceof PathPlan;
         lengthDown.visible = lengthUp.visible = path || plan instanceof RampartPlan;
         widthDown.visible = widthUp.visible = path;
+        boolean blueprint = plan instanceof BlueprintPlan;
+        nameBox.visible = nameOk.visible = blueprint;
+        if (!blueprint) {
+            nameBox.setFocused(false);
+        }
+        nameBox.tick();
     }
 
     private Component requirementsText(BuildPlan plan) {
+        if (plan instanceof BlueprintPlan bp) {
+            return Component.translatable(bp.isImage() ? "gui.robotsconstructores.needs_image" : "gui.robotsconstructores.needs_blueprint");
+        }
         if (plan instanceof PathPlan path) {
             return path.isDirtPath()
                     ? Component.translatable("gui.robotsconstructores.needs_dirt_path")

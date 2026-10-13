@@ -38,6 +38,19 @@ Elige el plano con `<` y `>`. Debajo verás qué materiales necesita.
 - Material: el mismo que la casa (tablones, roca, piedra, ladrillos...). Con largo 16 son 168 bloques más 5 escaleras de mano (opcionales).
 - Necesita terreno llano: si hay algo en medio, te dice dónde.
 
+**Plano (estructura .nbt):** copia cualquier construcción.
+1. Haz o busca la construcción y guárdala con un **bloque de estructuras** (`/give @s structure_block`, modo *Guardar*, ponle un nombre, por ejemplo `casa1`, y pulsa *GUARDAR*). También puedes copiar archivos `.nbt` en la carpeta `.minecraft\robotsconstructores\planos\`.
+2. En el robot elige **Plano**, escribe el nombre (`casa1`) y pulsa **OK**.
+3. Mete los materiales. Si falta algo, el robot te dice en el chat exactamente qué y cuánto.
+4. Ponte detrás del robot mirando hacia donde quieres la construcción y pulsa **Iniciar**. La copia a 2 bloques delante, girada hacia donde miras, de abajo arriba y con cada bloque en su orientación.
+- Tamaño máximo: 64 bloques de lado. No copia lo que hay dentro de los cofres, ni el agua o la lava.
+
+**Imagen (pixel art .png):** convierte una imagen en un mural.
+1. Copia la imagen en `.minecraft\robotsconstructores\imagenes\` (la carpeta se crea sola al abrir el juego con el mod).
+2. En el robot elige **Imagen**, escribe el nombre (por ejemplo `logo` o `logo.png`) y pulsa **OK**.
+3. Cada píxel se convierte en el **hormigón** del color más parecido (16 colores). Si no tienes hormigón de un color, usa la **lana** del mismo color. Las partes transparentes se quedan vacías. Si la imagen es mayor de 64×64, se reduce.
+4. Construye el mural de pie, a 2 bloques delante del robot. El robot te dice cuántos bloques de cada color necesita.
+
 **Caminos de cualquier tipo:**
 - **Camino (bloque de muestra):** pon en la ranura de muestra (a la derecha, debajo del nombre del plano) el bloque que quieras: grava, piedra lisa, tablones, ladrillos, losas, cualquiera. Mete en el inventario bloques iguales.
 - **Senda de tierra:** convierte el césped y la tierra en senda, como una pala. No gasta nada.

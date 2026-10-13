@@ -3,7 +3,14 @@ package com.robotsconstructores.entity;
 import com.robotsconstructores.building.BlockRole;
 import com.robotsconstructores.building.BuildPlan;
 import com.robotsconstructores.building.BuildPlans;
+import com.robotsconstructores.building.BlueprintLoader;
+import com.robotsconstructores.building.BlueprintPlan;
 import com.robotsconstructores.building.PathPlan;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.chat.MutableComponent;
+import java.util.LinkedHashMap;
 import com.robotsconstructores.building.RampartPlan;
 import com.robotsconstructores.building.PlannedBlock;
 import net.minecraft.sounds.SoundEvents;
@@ -61,6 +68,7 @@ public class BuilderRobotEntity extends BaseRobotEntity {
     private final SimpleContainer sample = new SimpleContainer(1);
     private int pathLength = PathPlan.DEFAULT_LENGTH;
     private int pathWidth = PathPlan.DEFAULT_WIDTH;
+    private String blueprintName = "";
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -149,6 +157,20 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         status = RobotStatus.READY;
     }
 
+    /** Llamado desde el paquete de red: nombre del archivo de plano o imagen (se valida aquí). */
+    public void setBlueprintName(String name) {
+        if (jobState.isActive() || jobState == JobState.PAUSED) {
+            notifyStatus(RobotStatus.BUSY);
+            return;
+        }
+        if (!BlueprintLoader.isSafeName(name)) {
+            notifyStatus(RobotStatus.BLUEPRINT_NOT_FOUND, name.length() > 64 ? name.substring(0, 64) : name);
+            return;
+        }
+        blueprintName = name;
+        notifyStatus(RobotStatus.BLUEPRINT_SET, name);
+    }
+
     private void changePathSize(int dLength, int dWidth) {
         if (jobState.isActive() || jobState == JobState.PAUSED) {
             notifyStatus(RobotStatus.BUSY);
@@ -199,10 +221,53 @@ public class BuilderRobotEntity extends BaseRobotEntity {
     }
 
     /** Cuántos bloques obligatorios faltan para terminar desde "fromIndex". 0 = hay suficientes. */
+    /** Objetos concretos que faltan para un plano copiado (estructura o imagen). */
+    private Map<Item, Integer> missingBlueprintItems(int fromIndex) {
+        Map<Item, Integer> need = new LinkedHashMap<>();
+        for (int i = fromIndex; i < blocks.size(); i++) {
+            PlannedBlock b = blocks.get(i);
+            if (b.role() == BlockRole.BLUEPRINT && b.state() != null) {
+                Item item = BlueprintLoader.requiredItem(b.state());
+                if (item != null) {
+                    need.merge(item, 1, Integer::sum);
+                }
+            }
+        }
+        Map<Item, Integer> missing = new LinkedHashMap<>();
+        for (Map.Entry<Item, Integer> e : need.entrySet()) {
+            Item alt = BlueprintLoader.alternativeItem(e.getKey());
+            int have = countItem(e.getKey()) + (alt != null ? countItem(alt) : 0);
+            if (have < e.getValue()) {
+                missing.put(e.getKey(), e.getValue() - have);
+            }
+        }
+        return missing;
+    }
+
+    private Component describeMissing(Map<Item, Integer> missing) {
+        MutableComponent text = Component.empty();
+        int shown = 0;
+        for (Map.Entry<Item, Integer> e : missing.entrySet()) {
+            if (shown == 6) {
+                text.append(", ...");
+                break;
+            }
+            text.append(shown == 0 ? "" : ", ").append(e.getValue() + " x ").append(e.getKey().getDescription());
+            shown++;
+        }
+        return text;
+    }
+
     private int missingMaterials(int fromIndex) {
+        int blueprintMissing = 0;
+        for (int n : missingBlueprintItems(fromIndex).values()) {
+            blueprintMissing += n;
+        }
         Map<BlockRole, Integer> need = new EnumMap<>(BlockRole.class);
         for (int i = fromIndex; i < blocks.size(); i++) {
-            need.merge(blocks.get(i).role(), 1, Integer::sum);
+            if (blocks.get(i).role() != BlockRole.BLUEPRINT) {
+                need.merge(blocks.get(i).role(), 1, Integer::sum);
+            }
         }
         Map<BlockRole, Integer> have = new EnumMap<>(BlockRole.class);
         for (BlockRole r : BlockRole.values()) {
@@ -227,7 +292,7 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             }
             missing += Math.max(0, need.getOrDefault(r, 0) - have.get(r));
         }
-        return missing;
+        return missing + blueprintMissing;
     }
 
     // ---------- zona ----------
@@ -285,6 +350,13 @@ public class BuilderRobotEntity extends BaseRobotEntity {
                 notifyStatus(RobotStatus.NO_PATH_GROUND);
                 return;
             }
+        } else if (plan instanceof BlueprintPlan blueprint && level instanceof ServerLevel serverLevel) {
+            BlueprintLoader.Result result = BlueprintLoader.load(serverLevel, blueprint, blueprintName, blockPosition(), playerFacing);
+            if (result.error() != null) {
+                notifyStatus(result.error(), result.args());
+                return;
+            }
+            list = result.blocks();
         } else if (plan instanceof RampartPlan rampart) {
             list = rampart.blocks(blockPosition(), playerFacing, pathLength);
         } else {
@@ -298,6 +370,12 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         }
         blocks.clear();
         blocks.addAll(list);
+        Map<Item, Integer> missingItems = missingBlueprintItems(0);
+        if (!missingItems.isEmpty()) {
+            blocks.clear();
+            notifyStatus(RobotStatus.MISSING_ITEMS, describeMissing(missingItems));
+            return;
+        }
         int missing = missingMaterials(0);
         if (missing > 0) {
             blocks.clear();
@@ -368,6 +446,10 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         }
         if (planned.role() == BlockRole.DIRT_PATH || planned.role() == BlockRole.PATH) {
             pathTick(level, planned);
+            return;
+        }
+        if (planned.role() == BlockRole.BLUEPRINT) {
+            blueprintTick(level, planned);
             return;
         }
         Item material = findMaterial(planned.role());
@@ -466,6 +548,51 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         checkFinished();
     }
 
+    /** Un bloque copiado de un plano: el bloque exacto (con su orientación), gastando su objeto. */
+    private void blueprintTick(ServerLevel level, PlannedBlock planned) {
+        BlockPos pos = planned.pos();
+        BlockState target = planned.state();
+        if (target == null || level.getBlockState(pos).equals(target)) {
+            nextIndex++;
+            cooldown = 1;
+            checkFinished();
+            return;
+        }
+        if (!canPlaceAt(level, pos)) {
+            setJobState(JobState.PAUSED);
+            notifyStatus(RobotStatus.ZONE_BLOCKED, pos.getX(), pos.getY(), pos.getZ());
+            return;
+        }
+        Item item = BlueprintLoader.requiredItem(target);
+        if (item != null) {
+            Item alt = BlueprintLoader.alternativeItem(item);
+            Item use = countItem(item) > 0 ? item : (alt != null && countItem(alt) > 0 ? alt : null);
+            if (use == null) {
+                setJobState(JobState.PAUSED);
+                notifyStatus(RobotStatus.MISSING_ITEMS, describeMissing(missingBlueprintItems(nextIndex)));
+                return;
+            }
+            if (!removeOne(use)) {
+                return;
+            }
+            if (use == alt) {
+                target = Block.byItem(alt).defaultBlockState(); // lana en vez de hormigón
+            }
+        } else if (!BlueprintLoader.isSecondHalf(target)) {
+            nextIndex++; // bloque que no se puede conseguir (agua, fuego...): se salta
+            cooldown = 1;
+            checkFinished();
+            return;
+        }
+        // UPDATE_CLIENTS: se copia tal cual, sin que los vecinos lo cambien a medio construir
+        level.setBlock(pos, target, Block.UPDATE_CLIENTS);
+        level.playSound(null, pos, target.getSoundType(level, pos, this).getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
+        getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        swing(InteractionHand.MAIN_HAND);
+        nextIndex++;
+        checkFinished();
+    }
+
     private void checkFinished() {
         if (nextIndex >= blocks.size()) {
             finish();
@@ -493,6 +620,12 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         }
         tag.putLongArray("JobBlocks", posArr);
         tag.putIntArray("JobRoles", roleArr);
+        ListTag states = new ListTag();
+        for (PlannedBlock b : blocks) {
+            states.add(b.state() != null ? NbtUtils.writeBlockState(b.state()) : new CompoundTag());
+        }
+        tag.put("JobStates", states);
+        tag.putString("BlueprintName", blueprintName);
         tag.put("Sample", saveContainer(sample));
         tag.putInt("PathLength", pathLength);
         tag.putInt("PathWidth", pathWidth);
@@ -513,11 +646,20 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         long[] posArr = tag.getLongArray("JobBlocks");
         int[] roleArr = tag.getIntArray("JobRoles");
         BlockRole[] roles = BlockRole.values();
+        ListTag states = tag.getList("JobStates", net.minecraft.nbt.Tag.TAG_COMPOUND);
         for (int i = 0; i < posArr.length && i < roleArr.length; i++) {
             int r = roleArr[i];
             if (r >= 0 && r < roles.length) {
-                blocks.add(new PlannedBlock(BlockPos.of(posArr[i]), roles[r]));
+                BlockState state = null;
+                if (i < states.size() && !states.getCompound(i).isEmpty()) {
+                    state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), states.getCompound(i));
+                }
+                blocks.add(new PlannedBlock(BlockPos.of(posArr[i]), roles[r], state));
             }
+        }
+        blueprintName = tag.getString("BlueprintName");
+        if (!BlueprintLoader.isSafeName(blueprintName)) {
+            blueprintName = "";
         }
         loadContainer(sample, tag.getList("Sample", net.minecraft.nbt.Tag.TAG_COMPOUND));
         if (tag.contains("PathLength")) {

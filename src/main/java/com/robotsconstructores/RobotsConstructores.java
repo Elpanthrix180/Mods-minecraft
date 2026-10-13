@@ -1,5 +1,6 @@
 package com.robotsconstructores;
 
+import com.robotsconstructores.building.BlueprintLoader;
 import com.robotsconstructores.entity.BaseRobotEntity;
 import com.robotsconstructores.network.ModNetwork;
 import com.robotsconstructores.registry.ModEntities;
@@ -30,6 +31,7 @@ public class RobotsConstructores {
 
     private void commonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(ModNetwork::register);
+        BlueprintLoader.createFolders();
     }
 
     private void registerAttributes(EntityAttributeCreationEvent event) {

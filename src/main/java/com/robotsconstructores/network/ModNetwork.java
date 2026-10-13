@@ -17,6 +17,11 @@ public final class ModNetwork {
                 .decoder(SetTargetAmountPacket::new)
                 .consumerMainThread(SetTargetAmountPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(SetBlueprintNamePacket.class, 1, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(SetBlueprintNamePacket::encode)
+                .decoder(SetBlueprintNamePacket::new)
+                .consumerMainThread(SetBlueprintNamePacket::handle)
+                .add();
     }
 
     private ModNetwork() {}
