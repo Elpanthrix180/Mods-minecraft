@@ -28,14 +28,14 @@ jobs:
       - name: Subir JAR como artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: robotsconstructores-jar
+          name: panthrixs-robots-jar
           path: build/libs/*.jar
 
       - name: Publicar JAR en Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.ref_name }}
-          name: Robots Constructores y Mineros (${{ github.ref_name }})
+          tag_name: panthrixs-robots-${{ github.ref_name }}
+          name: Panthrix's Robots (${{ github.ref_name }})
           prerelease: true
           make_latest: true
           files: build/libs/*.jar

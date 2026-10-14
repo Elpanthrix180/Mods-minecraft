@@ -1,11 +1,11 @@
-# Robots Constructores y Mineros
+# Panthrix's Robots
 
 Mod para **Minecraft Java 1.20.1** con **Forge 47.x** (Java 17).
 
 ## Cómo instalarlo (Windows 11)
 
 1. Instala Forge 1.20.1 desde la página oficial: https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html (botón *Installer*, después *Install client*).
-2. Descarga `robotsconstructores-0.1.0.jar` desde la pestaña **Releases** de este repositorio.
+2. Descarga `panthrixs-robots-0.1.0.jar` desde la pestaña **Releases** de este repositorio.
 3. Pulsa `Windows + R`, escribe `%appdata%\.minecraft\mods` y pulsa Enter. Si la carpeta `mods` no existe, créala.
 4. Copia el `.jar` dentro de esa carpeta.
 5. Abre el launcher de Minecraft, elige el perfil **forge 1.20.1** y pulsa Jugar.
