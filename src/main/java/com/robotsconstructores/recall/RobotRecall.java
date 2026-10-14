@@ -44,16 +44,21 @@ public final class RobotRecall {
         MinecraftServer server = player.server;
         int brought = 0, busy = 0, loading = 0;
         List<UUID> found = new ArrayList<>();
+        // primero se buscan (sin mover nada mientras se recorre la lista) y luego se teletransportan
+        List<BaseRobotEntity> mine = new ArrayList<>();
         for (ServerLevel level : server.getAllLevels()) {
             for (Entity e : level.getAllEntities()) {
                 if (e instanceof BaseRobotEntity robot && player.getUUID().equals(robot.getOwnerId())) {
-                    found.add(robot.getUUID());
-                    if (isBusy(robot)) {
-                        busy++;
-                    } else if (teleportToPlayer(robot, player)) {
-                        brought++;
-                    }
+                    mine.add(robot);
                 }
+            }
+        }
+        for (BaseRobotEntity robot : mine) {
+            found.add(robot.getUUID());
+            if (isBusy(robot)) {
+                busy++;
+            } else if (teleportToPlayer(robot, player)) {
+                brought++;
             }
         }
         // robots apuntados en la lista pero que no están cargados
