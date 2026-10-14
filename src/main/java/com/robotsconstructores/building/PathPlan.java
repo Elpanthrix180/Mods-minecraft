@@ -88,6 +88,11 @@ public class PathPlan implements BuildPlan {
                         break;
                     }
                     BlockState st = level.getBlockState(p);
+                    if (!dirtPath && !st.getFluidState().isEmpty() && st.canBeReplaced()
+                            && isOpen(level.getBlockState(p.above()))) {
+                        surface = p; // superficie de agua o lava: puente encima
+                        break;
+                    }
                     if (!isOpen(st) && isOpen(level.getBlockState(p.above()))) {
                         surface = p;
                         break;
@@ -95,7 +100,7 @@ public class PathPlan implements BuildPlan {
                 }
                 if (surface != null) {
                     BlockState st = level.getBlockState(surface);
-                    if (dirtPath ? isShovelable(st) : isGround(st)) {
+                    if (dirtPath ? isShovelable(st) : (isGround(st) || !st.getFluidState().isEmpty())) {
                         list.add(new PlannedBlock(surface, role()));
                     }
                 } else if (!dirtPath) {

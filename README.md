@@ -32,6 +32,12 @@ El minero puede cavar junto a la **lava** y el **agua**, y también a través de
 - Atraviesa los lagos de lava tapándolos casilla a casilla.
 - Lo único que no puede tapar es el agua que está dentro de otro bloque (por ejemplo, una escalera con agua). Esa parte la salta.
 
+## Construir en agua y lava
+El constructor puede colocar bloques **dentro del agua y de la lava**: el bloque ocupa el sitio del líquido. Sirve para muros en el mar, casas sobre la lava, etc.
+- Los **caminos** que cruzan agua o lava hacen un **puente** sobre la superficie.
+- Las puertas, escaleras y escaleras de mano que coloca dentro del agua quedan **mojadas** (con agua dentro), como en el juego normal.
+- Los robots **no se ahogan** bajo el agua. Recuerda que fuera del Nether la lava sí les hace daño: deja el robot en un sitio seco y que construya a distancia.
+
 ## En el Nether
 Los robots son **ignífugos en el Nether**: allí el fuego y la lava no les hacen daño. En el mundo normal y en el End sí les afectan. 
 

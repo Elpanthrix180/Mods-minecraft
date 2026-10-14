@@ -94,6 +94,12 @@ public abstract class BaseRobotEntity extends PathfinderMob {
         }
     }
 
+    /** Los robots no respiran: no se ahogan bajo el agua. */
+    @Override
+    public boolean canBreatheUnderwater() {
+        return true;
+    }
+
     @Override
     public boolean isPushable() {
         return false;

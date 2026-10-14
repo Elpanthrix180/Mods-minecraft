@@ -43,6 +43,8 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
@@ -304,9 +306,19 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             return false;
         }
         BlockState current = level.getBlockState(pos);
-        boolean free = current.isAir() || (current.canBeReplaced() && current.getFluidState().isEmpty());
+        // aire, plantas sustituibles, agua o lava (el bloque ocupa el sitio del líquido)
+        boolean free = current.isAir() || current.canBeReplaced();
         return free && isSafeToTouch(current)
                 && level.isUnobstructed(Blocks.STONE.defaultBlockState(), pos, CollisionContext.empty());
+    }
+
+    /** Si el sitio tenía agua y el bloque puede llevar agua dentro (puertas, escaleras...), queda mojado. */
+    private static BlockState withWater(Level level, BlockPos pos, BlockState state) {
+        if (state.hasProperty(BlockStateProperties.WATERLOGGED)) {
+            boolean water = level.getFluidState(pos).is(Fluids.WATER) && level.getFluidState(pos).isSource();
+            return state.setValue(BlockStateProperties.WATERLOGGED, water);
+        }
+        return state;
     }
 
     private boolean canPlace(Level level, PlannedBlock b) {
@@ -321,7 +333,7 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             if (b.role() == BlockRole.DIRT_PATH) {
                 return (PathPlan.isShovelable(st) || st.is(Blocks.DIRT_PATH)) && aboveOpen;
             }
-            boolean open = st.isAir() || (st.canBeReplaced() && st.getFluidState().isEmpty());
+            boolean open = st.isAir() || st.canBeReplaced();
             return (open || PathPlan.isGround(st) || (sampleBlockItem() != null && st.is(Block.byItem(sampleBlockItem()))))
                     && isSafeToTouch(st);
         }
@@ -475,20 +487,20 @@ public class BuilderRobotEntity extends BaseRobotEntity {
         BlockState toPlace = Block.byItem(material).defaultBlockState();
         if (toPlace.getBlock() instanceof DoorBlock) {
             BlockState lower = toPlace.setValue(DoorBlock.FACING, facing).setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER);
-            level.setBlock(pos, lower, Block.UPDATE_ALL);
-            level.setBlock(pos.above(), lower.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER), Block.UPDATE_ALL);
+            level.setBlock(pos, withWater(level, pos, lower), Block.UPDATE_ALL);
+            level.setBlock(pos.above(), withWater(level, pos.above(), lower.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER)), Block.UPDATE_ALL);
             toPlace = lower;
         } else if (toPlace.getBlock() instanceof StairBlock && planned.state() != null
                 && planned.state().hasProperty(StairBlock.FACING)) {
             // escalera del tejado: orientada como dice el plano
             toPlace = toPlace.setValue(StairBlock.FACING, planned.state().getValue(StairBlock.FACING));
-            level.setBlock(pos, toPlace, Block.UPDATE_ALL);
+            level.setBlock(pos, withWater(level, pos, toPlace), Block.UPDATE_ALL);
         } else if (toPlace.getBlock() instanceof LadderBlock) {
             // pegada a la pared que tiene detrás (en la dirección de construcción)
             toPlace = toPlace.setValue(LadderBlock.FACING, facing.getOpposite());
-            level.setBlock(pos, toPlace, Block.UPDATE_ALL);
+            level.setBlock(pos, withWater(level, pos, toPlace), Block.UPDATE_ALL);
         } else {
-            level.setBlock(pos, toPlace, Block.UPDATE_ALL);
+            level.setBlock(pos, withWater(level, pos, toPlace), Block.UPDATE_ALL);
         }
         level.playSound(null, pos, toPlace.getSoundType(level, pos, this).getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
         getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
@@ -530,7 +542,7 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             return;
         }
         if (dirt) {
-            level.setBlock(pos, target, Block.UPDATE_ALL);
+            level.setBlock(pos, withWater(level, pos, target), Block.UPDATE_ALL);
             level.playSound(null, pos, SoundEvents.SHOVEL_FLATTEN, SoundSource.BLOCKS, 1.0F, 1.0F);
         } else {
             if (!removeOne(material)) {
@@ -545,7 +557,7 @@ public class BuilderRobotEntity extends BaseRobotEntity {
                     }
                 }
             }
-            level.setBlock(pos, target, Block.UPDATE_ALL);
+            level.setBlock(pos, withWater(level, pos, target), Block.UPDATE_ALL);
             level.playSound(null, pos, target.getSoundType(level, pos, this).getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
         }
         getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
@@ -591,7 +603,7 @@ public class BuilderRobotEntity extends BaseRobotEntity {
             return;
         }
         // UPDATE_CLIENTS: se copia tal cual, sin que los vecinos lo cambien a medio construir
-        level.setBlock(pos, target, Block.UPDATE_CLIENTS);
+        level.setBlock(pos, withWater(level, pos, target), Block.UPDATE_CLIENTS);
         level.playSound(null, pos, target.getSoundType(level, pos, this).getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
         getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
         swing(InteractionHand.MAIN_HAND);
