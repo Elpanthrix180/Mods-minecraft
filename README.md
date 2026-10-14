@@ -26,8 +26,14 @@ Mod para **Minecraft Java 1.20.1** con **Forge 47.x** (Java 17).
 ```
 **Robot Minero:** igual, pero con un **pico de hierro** en lugar de los ladrillos.
 
+## Lava y agua
+El minero puede cavar junto a la **lava** y el **agua**, y también a través de ellas. Antes de cavar, **las tapa** con roca, tierra, rocanegra, piedra infernal, etc. de su inventario, como haría un jugador con cuidado. Así no se derraman por los túneles ni queman lo que lleva.
+- Necesita bloques de relleno en el inventario. Normalmente ya los tiene de cavar. Si no tiene, te avisa y deja esa parte.
+- Atraviesa los lagos de lava tapándolos casilla a casilla.
+- Lo único que no puede tapar es el agua que está dentro de otro bloque (por ejemplo, una escalera con agua). Esa parte la salta.
+
 ## En el Nether
-Los robots son **ignífugos en el Nether**: allí el fuego y la lava no les hacen daño. En el mundo normal y en el End sí les afectan. Aun así, el minero sigue sin cavar junto a la lava, para que no se derrame por los túneles ni queme los objetos.
+Los robots son **ignífugos en el Nether**: allí el fuego y la lava no les hacen daño. En el mundo normal y en el End sí les afectan. 
 
 ## Varita de Robots
 - **Clic derecho sobre un robot:** lo guarda dentro de la varita, con todo su inventario y su configuración. Caben hasta 8. (Si está trabajando o en pausa, primero cancela o deja que termine.)

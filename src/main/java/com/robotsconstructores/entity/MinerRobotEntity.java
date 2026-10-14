@@ -36,6 +36,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
@@ -419,6 +421,40 @@ public class MinerRobotEntity extends BaseRobotEntity {
         return isSafeToTouch(state) && state.getDestroySpeed(level, pos) >= 0 && state.getFluidState().isEmpty();
     }
 
+    /**
+     * Tapa con roca/tierra de su inventario la lava o el agua que haya en esta casilla y alrededor
+     * (como haría un jugador con cuidado). Devuelve false si no puede (sin bloques o fluido dentro
+     * de un bloque, como una escalera con agua).
+     */
+    private boolean sealFluids(ServerLevel level, BlockPos center) {
+        BlockPos feet = blockPosition();
+        List<BlockPos> around = new ArrayList<>(7);
+        around.add(center);
+        for (Direction d : Direction.values()) {
+            around.add(center.relative(d));
+        }
+        for (BlockPos p : around) {
+            if (isSameBlockPos(p, feet) || isSameBlockPos(p, feet.above()) || !level.isLoaded(p)) {
+                continue; // nunca se tapa a sí mismo
+            }
+            BlockState st = level.getBlockState(p);
+            if (st.getFluidState().isEmpty()) {
+                continue;
+            }
+            if (!(st.getBlock() instanceof LiquidBlock) && !st.canBeReplaced()) {
+                return false; // agua dentro de otro bloque: no se puede tapar
+            }
+            Item filler = findFiller();
+            if (filler == null || !removeOne(filler)) {
+                notifyStatus(RobotStatus.NO_FILLER);
+                return false;
+            }
+            level.setBlock(p, Block.byItem(filler).defaultBlockState(), Block.UPDATE_ALL);
+            level.playSound(null, p, SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 0.8F, 1.0F);
+        }
+        return true;
+    }
+
     private static boolean isLava(ServerLevel level, BlockPos pos) {
         return level.getFluidState(pos).is(FluidTags.LAVA);
     }
@@ -496,7 +532,8 @@ public class MinerRobotEntity extends BaseRobotEntity {
         while (!pendingOres.isEmpty()) {
             BlockPos ore = pendingOres.get(0);
             BlockState st = level.getBlockState(ore);
-            if (!matches(st) || !canBreak(level, ore, st) || touchesFluid(level, ore) || !inReach(ore)) {
+            if (!matches(st) || !canBreak(level, ore, st) || !inReach(ore)
+                    || (touchesFluid(level, ore) && !sealFluids(level, ore))) {
                 pendingOres.remove(0);
                 continue;
             }
@@ -534,7 +571,8 @@ public class MinerRobotEntity extends BaseRobotEntity {
             stuckTicks = 0;
             return;
         }
-        if (touchesFluid(level, cell) || touchesFluid(level, cell.above())) {
+        if ((touchesFluid(level, cell) && !sealFluids(level, cell))
+                || (touchesFluid(level, cell.above()) && !sealFluids(level, cell.above()))) {
             skipStripBranch();
             return;
         }
@@ -561,7 +599,7 @@ public class MinerRobotEntity extends BaseRobotEntity {
         }
         // 4) tapar huecos del suelo con roca/tierra para no caerse
         BlockPos floor = cell.below();
-        if (isOpenCell(level, floor) && !isLava(level, floor)) {
+        if (isOpenCell(level, floor)) {
             Item filler = findFiller();
             if (filler != null && removeOne(filler)) {
                 level.setBlock(floor, Block.byItem(filler).defaultBlockState(), Block.UPDATE_ALL);
@@ -618,6 +656,10 @@ public class MinerRobotEntity extends BaseRobotEntity {
                 return;
             }
             cooldown = MINE_INTERVAL;
+            if (touchesFluid(level, current) && !sealFluids(level, current)) {
+                skipCurrent(true);
+                return;
+            }
             if (breakAndCollect(level, current, state, true)) {
                 current = null;
                 if (obtained >= targetAmount) {
@@ -683,15 +725,24 @@ public class MinerRobotEntity extends BaseRobotEntity {
         BlockPos feet = blockPosition();
         List<BlockPos> toClear = new ArrayList<>(3);
         BlockPos dest = planStep(feet, goal, toClear);
-        if (dest == null || touchesFluid(level, dest) || isLava(level, dest.below())) {
+        if (dest == null) {
             return false;
+        }
+        if ((touchesFluid(level, dest) || touchesFluid(level, dest.above())) && cooldown <= 0) {
+            // tapar la lava/agua del camino antes de cavar
+            cooldown = MINE_INTERVAL;
+            return sealFluids(level, dest) && sealFluids(level, dest.above());
         }
         for (BlockPos cell : toClear) {
             BlockState s = level.getBlockState(cell);
             if (s.isAir() || (s.getCollisionShape(level, cell).isEmpty() && s.getFluidState().isEmpty())) {
                 continue; // ya está libre
             }
-            if (touchesFluid(level, cell) || !canBreak(level, cell, s)) {
+            if (touchesFluid(level, cell) && !sealFluids(level, cell)) {
+                return false;
+            }
+            s = level.getBlockState(cell); // puede haber cambiado al tapar
+            if (!canBreak(level, cell, s)) {
                 return false;
             }
             if (cooldown > 0) {
