@@ -41,6 +41,18 @@ El constructor puede colocar bloques **dentro del agua y de la lava**: el bloque
 ## En el Nether
 Los robots son **ignífugos en el Nether**: allí el fuego y la lava no les hacen daño. En el mundo normal y en el End sí les afectan. 
 
+## Mando de Robots
+Receta:
+```
+ .  A  .        A = fragmento de amatista
+ I  R  I        I = lingote de hierro, R = redstone
+ I  E  I        E = perla de ender
+```
+- **Clic derecho:** trae hasta ti **todos tus robots que no están trabajando** (los que han terminado o no tienen trabajo).
+- Funciona aunque estén **lejos** o en **otra dimensión**. Si están en una zona que no está cargada, el mando la carga unos segundos, trae el robot y la vuelve a liberar.
+- Los robots que están **trabajando o en pausa se quedan** donde están, para no estropear su trabajo.
+- Solo trae **tus** robots: los que colocaste tú.
+
 ## Varita de Robots
 - **Clic derecho sobre un robot:** lo guarda dentro de la varita, con todo su inventario y su configuración. Caben hasta 8. (Si está trabajando o en pausa, primero cancela o deja que termine.)
 - **Clic derecho sobre un bloque:** saca el robot elegido y lo pone ahí.

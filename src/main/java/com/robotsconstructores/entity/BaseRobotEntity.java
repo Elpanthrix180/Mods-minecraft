@@ -30,6 +30,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkHooks;
+import com.robotsconstructores.recall.RobotRegistry;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -89,6 +90,10 @@ public abstract class BaseRobotEntity extends PathfinderMob {
     @Override
     public void tick() {
         super.tick();
+        // apuntar dónde está el robot para que el Mando lo encuentre aunque la zona no esté cargada
+        if (ownerId != null && tickCount % 40 == 0 && level() instanceof ServerLevel serverLevel) {
+            RobotRegistry.get(serverLevel.getServer()).update(getUUID(), ownerId, serverLevel.dimension(), blockPosition());
+        }
         if (isOnFire() && fireImmune()) {
             clearFire(); // en el Nether no se ven ardiendo
         }
@@ -98,6 +103,15 @@ public abstract class BaseRobotEntity extends PathfinderMob {
     @Override
     public boolean canBreatheUnderwater() {
         return true;
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        // muerto, recogido o guardado en la varita: se borra de la lista (al descargarse la zona, no)
+        if (reason.shouldDestroy() && level() instanceof ServerLevel serverLevel) {
+            RobotRegistry.get(serverLevel.getServer()).remove(getUUID());
+        }
+        super.remove(reason);
     }
 
     @Override
@@ -120,6 +134,11 @@ public abstract class BaseRobotEntity extends PathfinderMob {
 
     public JobState getJobState() {
         return jobState;
+    }
+
+    @Nullable
+    public UUID getOwnerId() {
+        return ownerId;
     }
 
     public void setOwner(UUID owner) {

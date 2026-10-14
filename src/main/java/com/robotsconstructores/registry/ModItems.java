@@ -2,6 +2,7 @@ package com.robotsconstructores.registry;
 
 import com.robotsconstructores.RobotsConstructores;
 import com.robotsconstructores.item.RobotSpawnItem;
+import com.robotsconstructores.item.RobotRemoteItem;
 import com.robotsconstructores.item.RobotWandItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.DeferredRegister;
@@ -19,6 +20,9 @@ public final class ModItems {
 
     public static final RegistryObject<Item> ROBOT_WAND = ITEMS.register("robot_wand",
             () -> new RobotWandItem(new Item.Properties().stacksTo(1).fireResistant()));
+
+    public static final RegistryObject<Item> ROBOT_REMOTE = ITEMS.register("robot_remote",
+            () -> new RobotRemoteItem(new Item.Properties().stacksTo(1)));
 
     private ModItems() {}
 }

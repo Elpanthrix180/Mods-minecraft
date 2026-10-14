@@ -165,5 +165,13 @@
   "wand.robotsconstructores.tooltip.count": "Robots guardados: %s/%s",
   "wand.robotsconstructores.tooltip.help1": "Clic derecho a un robot: guardarlo",
   "wand.robotsconstructores.tooltip.help2": "Clic derecho a un bloque: sacar el elegido",
-  "wand.robotsconstructores.tooltip.help3": "Mayús + clic derecho al aire: elegir otro"
+  "wand.robotsconstructores.tooltip.help3": "Mayús + clic derecho al aire: elegir otro",
+  "item.robotsconstructores.robot_remote": "Mando de Robots",
+  "remote.robotsconstructores.none": "No tienes robots puestos en el mundo.",
+  "remote.robotsconstructores.result": "Mando: %s robots traídos, %s trabajando (se quedan), %s lejos (cargando su zona...).",
+  "remote.robotsconstructores.arrived": "%s ha llegado desde lejos.",
+  "remote.robotsconstructores.busy_far": "%s está trabajando lejos; no lo traigo.",
+  "remote.robotsconstructores.lost": "No he encontrado un robot cerca de X=%s Z=%s (quizá lo rompieron).",
+  "remote.robotsconstructores.tooltip1": "Clic derecho: trae hasta ti tus robots que no están trabajando",
+  "remote.robotsconstructores.tooltip2": "Funciona aunque estén lejos o en otra dimensión"
 }
