@@ -318,3 +318,47 @@ for kind in ("builder", "miner"):
     glow.save(os.path.join(ROOT, "entity", f"{kind}_robot_glow.png"))
     (builder_icon() if kind == "builder" else miner_icon()).save(os.path.join(ROOT, "item", f"{kind}_robot.png"))
 print("Texturas generadas")
+
+
+def mod_logo():
+    """Icono del mod (lista de mods de Forge): cabeza de robot en pixel art, 32x32 ampliado a 256x256."""
+    S = 32
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    # fondo: círculo morado oscuro con borde claro
+    for x in range(S):
+        for y in range(S):
+            d = ((x - 15.5) ** 2 + (y - 15.5) ** 2) ** 0.5
+            if d <= 15.5:
+                t = y / S
+                img.putpixel((x, y), (int(60 + 40 * (1 - t)), int(30 + 20 * (1 - t)), int(100 + 60 * (1 - t)), 255))
+            if 14.5 < d <= 15.5:
+                img.putpixel((x, y), (176, 124, 255, 255))
+    # antena con bombilla
+    fill(img, (15, 3, 17, 7), (90, 90, 100, 255))
+    fill(img, (14, 2, 18, 4), (255, 220, 90, 255))
+    # cabeza
+    fill(img, (8, 7, 24, 22), (90, 92, 104, 255))
+    fill(img, (9, 8, 23, 21), (150, 152, 162, 255))
+    fill(img, (9, 8, 23, 10), (122, 62, 196, 255))            # franja morada
+    # orejas / tornillos
+    fill(img, (6, 12, 8, 17), (70, 40, 110, 255))
+    fill(img, (24, 12, 26, 17), (70, 40, 110, 255))
+    # visor luminoso
+    fill(img, (10, 12, 22, 16), (20, 20, 26, 255))
+    fill(img, (11, 13, 15, 15), (120, 255, 230, 255))
+    fill(img, (17, 13, 21, 15), (120, 255, 230, 255))
+    img.putpixel((11, 13), (220, 255, 250, 255))
+    img.putpixel((17, 13), (220, 255, 250, 255))
+    # boca de altavoz
+    for x in range(12, 20, 2):
+        fill(img, (x, 18, x + 1, 20), (60, 60, 70, 255))
+    # cuello y hombros
+    fill(img, (13, 22, 19, 24), (70, 72, 82, 255))
+    fill(img, (7, 24, 25, 29), (122, 62, 196, 255))
+    fill(img, (14, 25, 18, 27), (255, 120, 255, 255))          # núcleo
+    fill(img, (7, 24, 25, 25), (176, 124, 255, 255))
+    return img.resize((256, 256), Image.NEAREST)
+
+
+mod_logo().save(os.path.join(ROOT, "..", "..", "..", "logo.png"))
+print("Logo generado")
