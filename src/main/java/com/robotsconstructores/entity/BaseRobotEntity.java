@@ -76,6 +76,24 @@ public abstract class BaseRobotEntity extends PathfinderMob {
         this.goalSelector.addGoal(2, new RandomLookAroundGoal(this));
     }
 
+    /**
+     * En el Nether (o en cualquier dimensión ardiente de otros mods) los robots son ignífugos:
+     * no les hace daño el fuego ni la lava y no se quedan ardiendo.
+     */
+    @Override
+    public boolean fireImmune() {
+        Level level = level();
+        return super.fireImmune() || level.dimension() == Level.NETHER || level.dimensionType().ultraWarm();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (isOnFire() && fireImmune()) {
+            clearFire(); // en el Nether no se ven ardiendo
+        }
+    }
+
     @Override
     public boolean isPushable() {
         return false;

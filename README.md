@@ -26,6 +26,9 @@ Mod para **Minecraft Java 1.20.1** con **Forge 47.x** (Java 17).
 ```
 **Robot Minero:** igual, pero con un **pico de hierro** en lugar de los ladrillos.
 
+## En el Nether
+Los robots son **ignífugos en el Nether**: allí el fuego y la lava no les hacen daño. En el mundo normal y en el End sí les afectan. Aun así, el minero sigue sin cavar junto a la lava, para que no se derrame por los túneles ni queme los objetos.
+
 ## Varita de Robots
 - **Clic derecho sobre un robot:** lo guarda dentro de la varita, con todo su inventario y su configuración. Caben hasta 8. (Si está trabajando o en pausa, primero cancela o deja que termine.)
 - **Clic derecho sobre un bloque:** saca el robot elegido y lo pone ahí.
