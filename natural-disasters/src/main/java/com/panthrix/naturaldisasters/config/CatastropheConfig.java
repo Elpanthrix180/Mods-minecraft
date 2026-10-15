@@ -69,6 +69,10 @@ public final class CatastropheConfig {
     public static final ForgeConfigSpec.BooleanValue VOLCANO_BOMBS;
     public static final ForgeConfigSpec.BooleanValue VOLCANO_LAVA_FLOWS;
     public static final ForgeConfigSpec.BooleanValue VOLCANO_LAVA_TEMPORARY;
+    public static final ForgeConfigSpec.IntValue SLIDE_RADIUS;
+    public static final ForgeConfigSpec.IntValue SLIDE_MAX_BLOCKS;
+    public static final ForgeConfigSpec.IntValue SLIDE_DEPTH;
+    public static final ForgeConfigSpec.BooleanValue SLIDE_BUILDINGS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_BLOCKS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_ZONES;
 
@@ -148,6 +152,13 @@ public final class CatastropheConfig {
         VOLCANO_BOMBS = b.comment("Lanzar rocas volcanicas que caen como bloques (necesita destruccion distinta de OFF)").define("rocasVolcanicas", true);
         VOLCANO_LAVA_FLOWS = b.comment("La lava desborda el crater y baja por la ladera (necesita destruccion distinta de OFF)").define("coladasDeLava", true);
         VOLCANO_LAVA_TEMPORARY = b.comment("Retirar las fuentes de lava de la erupcion al terminar").define("lavaTemporal", true);
+        b.pop();
+
+        b.comment("Deslizamientos de tierra (mover bloques necesita destruccion distinta de OFF)").push("deslizamiento");
+        SLIDE_RADIUS = b.comment("Radio de la ladera que se desliza").defineInRange("radio", 10, 4, 32);
+        SLIDE_MAX_BLOCKS = b.comment("Bloques que se mueven como maximo en un deslizamiento (ademas de maxBloquesPorEvento)").defineInRange("maxBloques", 300, 10, 5000);
+        SLIDE_DEPTH = b.comment("Capas de la superficie que pueden deslizarse en cada punto").defineInRange("profundidad", 2, 1, 5);
+        SLIDE_BUILDINGS = b.comment("Arrastrar tambien bloques de construcciones (madera, ladrillo...)").define("arrastraConstrucciones", false);
         b.pop();
 
         b.comment("Proteccion del mundo. Ademas de esta lista, NUNCA se modifican bloques con inventario",

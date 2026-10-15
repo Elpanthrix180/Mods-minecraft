@@ -8,6 +8,7 @@ import com.panthrix.naturaldisasters.event.FloodEvent;
 import com.panthrix.naturaldisasters.event.TornadoEvent;
 import com.panthrix.naturaldisasters.event.VolcanoEvent;
 import com.panthrix.naturaldisasters.event.HailstormEvent;
+import com.panthrix.naturaldisasters.event.LandslideEvent;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -26,6 +27,7 @@ public final class CatastropheEvents {
         EVENTS.put(CatastropheType.FLOOD, new FloodEvent());
         EVENTS.put(CatastropheType.EARTHQUAKE, new EarthquakeEvent());
         EVENTS.put(CatastropheType.VOLCANO, new VolcanoEvent());
+        EVENTS.put(CatastropheType.LANDSLIDE, new LandslideEvent());
     }
 
     private CatastropheEvents() {}
