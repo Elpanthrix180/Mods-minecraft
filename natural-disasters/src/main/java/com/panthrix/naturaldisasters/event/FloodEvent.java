@@ -113,7 +113,6 @@ public class FloodEvent extends CatastropheEvent {
         int perTick = (int) Math.max(2, 6 * f);
         RandomSource r = level.getRandom();
         int fr = floodRadius();
-        boolean changed = false;
         for (int i = 0; i < perTick * 3 && perTick > 0; i++) {
             int x = d.centerX + r.nextInt(2 * fr + 1) - fr;
             int z = d.centerZ + r.nextInt(2 * fr + 1) - fr;
@@ -128,10 +127,9 @@ public class FloodEvent extends CatastropheEvent {
             if (!DisasterUtil.takeBlockBudget(d)) break;
             level.setBlock(pos, Blocks.WATER.defaultBlockState(), 3);
             placed(d).add(pos.asLong());
-            changed = true;
             perTick--;
         }
-        if (changed && now % 20 == 0) save(d);
+        if (now % 20 == 0 && placed(d).size() != d.eventData.getLongArray(WATER_KEY).length) save(d);
     }
 
     /** Corriente: empuja suavemente en una direccion a quien este en el agua dentro de la zona. */
