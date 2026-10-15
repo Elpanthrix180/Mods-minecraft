@@ -37,8 +37,10 @@ public final class CatastropheManager {
             long now = now(server);
             if (d.phase == CatastrophePhase.CALM) {
                 tickCalm(server, d, now);
-            } else if (now >= d.phaseEndTick) {
-                advancePhase(server, d, now);
+            } else {
+                CatastropheEvent ev = CatastropheEvents.get(d.activeType);
+                if (ev != null) ev.tick(server.overworld(), d, d.phase, now);
+                if (d.phase != CatastrophePhase.CALM && now >= d.phaseEndTick) advancePhase(server, d, now);
             }
         } catch (Exception e) {
             // Mecanismo de recuperacion: si algo falla, se cancela el evento y se programa otro.
@@ -84,6 +86,7 @@ public final class CatastropheManager {
         }
         ServerPlayer target = players.get(overworld.getRandom().nextInt(players.size()));
         d.activeType = type;
+        d.eventData = new net.minecraft.nbt.CompoundTag();
         d.centerX = target.getBlockX();
         d.centerY = target.getBlockY();
         d.centerZ = target.getBlockZ();
@@ -135,9 +138,20 @@ public final class CatastropheManager {
             case ENDING -> CatastropheWarningManager.broadcast(server, t.displayName + ": el fenómeno pierde intensidad.", ChatFormatting.YELLOW);
             default -> { }
         }
+        CatastropheEvent ev = CatastropheEvents.get(t);
+        if (ev != null) ev.onPhaseStart(server.overworld(), d, phase);
     }
 
     private static void resetToCalm(MinecraftServer server, CatastropheSavedData d) {
+        CatastropheEvent ev = CatastropheEvents.get(d.activeType);
+        if (ev != null) {
+            try {
+                ev.onFinish(server.overworld(), d);
+            } catch (Exception e) {
+                NaturalDisastersMod.LOGGER.error("[Panthrix's Natural Disasters] Error al terminar la catastrofe.", e);
+            }
+        }
+        d.eventData = new net.minecraft.nbt.CompoundTag();
         if (d.activeType != null) d.lastType = d.activeType;
         d.activeType = null;
         d.phase = CatastrophePhase.CALM;

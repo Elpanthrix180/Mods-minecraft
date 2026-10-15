@@ -32,6 +32,7 @@ public class NaturalDisastersMod {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CatastropheConfig.SPEC);
         // Nos registramos en el bus de eventos del juego para recibir eventos del servidor.
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.addListener(com.panthrix.naturaldisasters.event.DroughtEvent::onCropGrow);
         LOGGER.info("[Panthrix's Natural Disasters] Mod cargado correctamente.");
     }
 

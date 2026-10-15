@@ -34,6 +34,15 @@ public final class CatastropheConfig {
     public static final ForgeConfigSpec.IntValue ENDING_SECONDS;
     public static final ForgeConfigSpec.IntValue RECOVERY_SECONDS;
 
+    public static final ForgeConfigSpec.BooleanValue SNOW_ACCUMULATION;
+    public static final ForgeConfigSpec.BooleanValue SNOW_TEMPORARY;
+    public static final ForgeConfigSpec.BooleanValue FREEZING;
+    public static final ForgeConfigSpec.BooleanValue LIGHTNING_FIRES;
+    public static final ForgeConfigSpec.BooleanValue HAIL_CROPS;
+    public static final ForgeConfigSpec.BooleanValue HAIL_GLASS;
+    public static final ForgeConfigSpec.BooleanValue DROUGHT_CROPS;
+    public static final ForgeConfigSpec.BooleanValue DROUGHT_DRY_FARMLAND;
+
     public static final Map<CatastropheType, ForgeConfigSpec.BooleanValue> ENABLED = new EnumMap<>(CatastropheType.class);
     public static final Map<CatastropheType, ForgeConfigSpec.IntValue> WEIGHT = new EnumMap<>(CatastropheType.class);
     public static final Map<CatastropheType, ForgeConfigSpec.IntValue> DURATION_SECONDS = new EnumMap<>(CatastropheType.class);
@@ -64,6 +73,17 @@ public final class CatastropheConfig {
         RECOVERY_SECONDS = b.defineInRange("segundosRecuperacion", 10, 0, 600);
         b.pop();
 
+        b.comment("Fenomenos meteorologicos").push("meteorologia");
+        SNOW_ACCUMULATION = b.comment("Ventisca: acumular capas de nieve en el suelo (cuenta para maxBloquesPorEvento)").define("acumularNieve", false);
+        SNOW_TEMPORARY = b.comment("Ventisca: retirar la nieve acumulada al terminar").define("nieveTemporal", true);
+        FREEZING = b.comment("Ventisca: congelar a los jugadores expuestos al cielo (necesita danoJugadores)").define("congelacion", true);
+        LIGHTNING_FIRES = b.comment("Tormenta: los rayos pueden provocar incendios (necesita destruccion distinta de OFF)").define("incendiosPorRayos", false);
+        HAIL_CROPS = b.comment("Granizada: dana los cultivos, reduce su crecimiento (necesita destruccion distinta de OFF)").define("granizoDanaCultivos", true);
+        HAIL_GLASS = b.comment("Granizada: rompe cristales expuestos (solo con destruccion INTENSE)").define("granizoRompeCristales", false);
+        DROUGHT_CROPS = b.comment("Sequia: los cultivos de la zona crecen mas despacio (efecto temporal)").define("sequiaFrenaCultivos", true);
+        DROUGHT_DRY_FARMLAND = b.comment("Sequia: seca la tierra de cultivo (necesita destruccion distinta de OFF)").define("sequiaSecaTierras", false);
+        b.pop();
+
         b.comment("Ajustes de cada fenomeno").push("fenomenos");
         for (CatastropheType t : CatastropheType.values()) {
             b.comment(t.displayName).push(t.id);
@@ -75,6 +95,19 @@ public final class CatastropheConfig {
         b.pop();
 
         SPEC = b.build();
+    }
+
+    /** Multiplicador segun la intensidad: suave 0.5, moderada 1, extrema 2. */
+    public static double intensityFactor() {
+        return switch (INTENSITY.get()) {
+            case SOFT -> 0.5;
+            case MODERATE -> 1.0;
+            case EXTREME -> 2.0;
+        };
+    }
+
+    public static boolean destructionOff() {
+        return DESTRUCTION.get() == Destruction.OFF;
     }
 
     private CatastropheConfig() {}

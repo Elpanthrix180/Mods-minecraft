@@ -114,6 +114,9 @@ public final class CatastropheCommands {
             return 0;
         }
         ctx.getSource().sendSuccess(() -> Component.literal("Iniciado: " + type.displayName).withStyle(ChatFormatting.GREEN), true);
+        if (!com.panthrix.naturaldisasters.core.CatastropheEvents.isImplemented(type)) {
+            reply(ctx, "Aviso: este fenómeno aún no tiene efectos (llegará en una fase posterior). Solo se mostrarán los avisos.", ChatFormatting.GRAY);
+        }
         return 1;
     }
 

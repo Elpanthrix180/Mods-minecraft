@@ -2,8 +2,7 @@
 
 Mod para **Minecraft Java 1.20.1** + **Forge 47.x** (Java 17). Mod ID: `panthrixsnaturaldisasters`.
 
-Estado: **Fase 1** (proyecto base). Todavia no hay catastrofes; el mod solo se carga y escribe en el registro:
-`[Panthrix's Natural Disasters] Mod cargado correctamente.`
+Estado: **Fase 3**. Sistema central (calendario, avisos, configuracion, guardado, comandos) y fenomenos meteorologicos: ventisca, tormenta electrica extrema, granizada y sequia.
 
 ## Compilar en Windows 11
 1. Instala **JDK 17** (gratis): https://adoptium.net/temurin/releases/?version=17 → Windows x64 → `.msi`. Durante la instalacion marca *Set JAVA_HOME*.

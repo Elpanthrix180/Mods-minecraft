@@ -22,6 +22,8 @@ public class CatastropheSavedData extends SavedData {
     public long phaseEndTick = 0;
     public CatastropheType lastType = null;
     public int centerX, centerY, centerZ;
+    /** Datos propios del fenomeno activo (por ejemplo, la nieve temporal que hay que retirar). */
+    public CompoundTag eventData = new CompoundTag();
 
     public static CatastropheSavedData get(ServerLevel overworld) {
         return overworld.getDataStorage().computeIfAbsent(CatastropheSavedData::load, CatastropheSavedData::new, NAME);
@@ -35,6 +37,7 @@ public class CatastropheSavedData extends SavedData {
         d.centerX = tag.getInt("centerX");
         d.centerY = tag.getInt("centerY");
         d.centerZ = tag.getInt("centerZ");
+        d.eventData = tag.getCompound("eventData");
         d.activeType = CatastropheType.byId(tag.getString("activeType"));
         d.lastType = CatastropheType.byId(tag.getString("lastType"));
         try {
@@ -59,6 +62,7 @@ public class CatastropheSavedData extends SavedData {
         tag.putString("phase", phase.name());
         tag.putString("activeType", activeType == null ? "" : activeType.id);
         tag.putString("lastType", lastType == null ? "" : lastType.id);
+        tag.put("eventData", eventData);
         return tag;
     }
 }
