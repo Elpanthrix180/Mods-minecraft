@@ -1,10 +1,19 @@
 package com.panthrix.naturaldisasters;
 
 import com.mojang.logging.LogUtils;
+import com.panthrix.naturaldisasters.command.CatastropheCommands;
+import com.panthrix.naturaldisasters.config.CatastropheConfig;
+import com.panthrix.naturaldisasters.core.CatastropheManager;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.server.ServerLifecycleHooks;
+import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 
 /**
@@ -20,6 +29,7 @@ public class NaturalDisastersMod {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public NaturalDisastersMod() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CatastropheConfig.SPEC);
         // Nos registramos en el bus de eventos del juego para recibir eventos del servidor.
         MinecraftForge.EVENT_BUS.register(this);
         LOGGER.info("[Panthrix's Natural Disasters] Mod cargado correctamente.");
@@ -27,6 +37,18 @@ public class NaturalDisastersMod {
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
-        LOGGER.info("[Panthrix's Natural Disasters] El servidor esta arrancando. Sistema de catastrofes listo (fase 1).");
+        LOGGER.info("[Panthrix's Natural Disasters] El servidor esta arrancando. Director de catastrofes listo.");
+    }
+
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        CatastropheCommands.register(event.getDispatcher());
+    }
+
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server != null) CatastropheManager.tick(server);
     }
 }
