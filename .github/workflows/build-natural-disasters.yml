@@ -1,0 +1,50 @@
+name: Compilar Panthrix's Natural Disasters
+
+on:
+  push:
+    paths:
+      - 'natural-disasters/**'
+      - '.github/workflows/build-natural-disasters.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: natural-disasters
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v3
+
+      - name: Compilar
+        run: |
+          chmod +x gradlew
+          ./gradlew build --no-daemon --stacktrace
+
+      - name: Subir JAR como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: panthrixs-natural-disasters-jar
+          path: natural-disasters/build/libs/*.jar
+
+      - name: Publicar JAR en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: panthrixs-natural-disasters-${{ github.ref_name }}
+          name: Panthrix's Natural Disasters (${{ github.ref_name }})
+          prerelease: true
+          make_latest: false
+          files: natural-disasters/build/libs/*.jar
+          body: |
+            JAR compilado automaticamente desde la rama `${{ github.ref_name }}` (commit ${{ github.sha }}).
+            Para Minecraft Java 1.20.1 + Forge 47.x. Copialo en la carpeta `mods`.

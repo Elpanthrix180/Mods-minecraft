@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#panthrixsnaturaldisasters:has_volcano",
+  "features": "panthrixsnaturaldisasters:volcano",
+  "step": "top_layer_modification"
+}
