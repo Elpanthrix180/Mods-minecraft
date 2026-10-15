@@ -2,7 +2,7 @@
 
 Mod para **Minecraft Java 1.20.1** + **Forge 47.x** (Java 17). Mod ID: `panthrixsnaturaldisasters`.
 
-Estado: **Fase 5**. Sistema central, ventisca, tormenta electrica, granizada, sequia, tornados, inundaciones, terremotos (grietas, zanjas, derrumbes, cuevas, vibracion de camara) y proteccion de bloques.
+Estado: **Fase 6**. Sistema central, ventisca, tormenta electrica, granizada, sequia, tornados, inundaciones, terremotos, volcanes (generacion natural y erupciones) y proteccion de bloques.
 
 ## Compilar en Windows 11
 1. Instala **JDK 17** (gratis): https://adoptium.net/temurin/releases/?version=17 → Windows x64 → `.msi`. Durante la instalacion marca *Set JAVA_HOME*.

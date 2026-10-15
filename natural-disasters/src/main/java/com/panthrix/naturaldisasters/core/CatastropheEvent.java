@@ -8,6 +8,9 @@ import net.minecraft.server.level.ServerLevel;
  */
 public abstract class CatastropheEvent {
 
+    /** Se llama justo antes del AVISO. Permite mover el centro del evento (por ejemplo, a un volcan). */
+    public void chooseLocation(ServerLevel level, CatastropheSavedData d) {}
+
     /** Se llama al entrar en cada fase (AVISO, PREPARACION, ACTIVO, FINALIZACION, RECUPERACION). */
     public void onPhaseStart(ServerLevel level, CatastropheSavedData d, CatastrophePhase phase) {}
 

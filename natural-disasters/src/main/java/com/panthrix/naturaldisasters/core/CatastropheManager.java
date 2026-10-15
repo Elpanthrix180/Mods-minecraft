@@ -90,6 +90,8 @@ public final class CatastropheManager {
         d.centerX = target.getBlockX();
         d.centerY = target.getBlockY();
         d.centerZ = target.getBlockZ();
+        CatastropheEvent ev = CatastropheEvents.get(type);
+        if (ev != null) ev.chooseLocation(overworld, d);
         enterPhase(server, d, CatastrophePhase.WARNING, now(server));
         NaturalDisastersMod.LOGGER.info("[Panthrix's Natural Disasters] Comienza {} cerca de {} {} {}", type.id, d.centerX, d.centerY, d.centerZ);
         return null;

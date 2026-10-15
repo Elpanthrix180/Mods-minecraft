@@ -40,7 +40,10 @@ public final class CatastropheCommands {
                 .then(Commands.literal("stop").requires(s -> s.hasPermission(2)).executes(CatastropheCommands::stop))
                 .then(Commands.literal("enable").requires(s -> s.hasPermission(2)).executes(ctx -> setEnabled(ctx, true)))
                 .then(Commands.literal("disable").requires(s -> s.hasPermission(2)).executes(ctx -> setEnabled(ctx, false)))
-                .then(Commands.literal("config").requires(s -> s.hasPermission(2)).executes(CatastropheCommands::config)));
+                .then(Commands.literal("config").requires(s -> s.hasPermission(2)).executes(CatastropheCommands::config))
+                .then(Commands.literal("volcano").requires(s -> s.hasPermission(2))
+                        .executes(CatastropheCommands::volcanoInfo)
+                        .then(Commands.literal("create").executes(CatastropheCommands::volcanoCreate))));
     }
 
     private static void reply(CommandContext<CommandSourceStack> ctx, String text, ChatFormatting color) {
@@ -65,6 +68,8 @@ public final class CatastropheCommands {
         reply(ctx, "/pnd stop - detiene la catástrofe actual (admin)", ChatFormatting.YELLOW);
         reply(ctx, "/pnd enable | disable - activa o desactiva las catástrofes aleatorias (admin)", ChatFormatting.YELLOW);
         reply(ctx, "/pnd config - muestra la configuración (admin)", ChatFormatting.YELLOW);
+        reply(ctx, "/pnd volcano - volcán conocido más cercano (admin)", ChatFormatting.YELLOW);
+        reply(ctx, "/pnd volcano create - crea un volcán pequeño donde estás (admin, modifica el terreno)", ChatFormatting.YELLOW);
         StringBuilder ids = new StringBuilder("Fenómenos: ");
         for (CatastropheType t : CatastropheType.values()) ids.append(t.id).append(' ');
         reply(ctx, ids.toString().trim(), ChatFormatting.GRAY);
@@ -134,6 +139,36 @@ public final class CatastropheCommands {
         ctx.getSource().sendSuccess(() -> Component.literal(enabled
                 ? "Catástrofes aleatorias ACTIVADAS."
                 : "Catástrofes aleatorias DESACTIVADAS.").withStyle(ChatFormatting.GREEN), true);
+        return 1;
+    }
+
+    private static int volcanoInfo(CommandContext<CommandSourceStack> ctx) {
+        net.minecraft.server.level.ServerLevel overworld = ctx.getSource().getServer().overworld();
+        com.panthrix.naturaldisasters.core.VolcanoRegistry reg = com.panthrix.naturaldisasters.core.VolcanoRegistry.get(overworld);
+        net.minecraft.world.phys.Vec3 pos = ctx.getSource().getPosition();
+        net.minecraft.core.BlockPos near = reg.nearest((int) pos.x, (int) pos.z, 100000);
+        reply(ctx, "Volcanes conocidos: " + reg.size(), ChatFormatting.GOLD);
+        if (near != null) {
+            reply(ctx, "El más cercano: X " + near.getX() + ", Y " + near.getY() + ", Z " + near.getZ(), ChatFormatting.YELLOW);
+        }
+        return 1;
+    }
+
+    private static int volcanoCreate(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack src = ctx.getSource();
+        if (src.getLevel() != src.getServer().overworld()) {
+            src.sendFailure(Component.literal("Solo se pueden crear volcanes en el mundo normal (Overworld)."));
+            return 0;
+        }
+        net.minecraft.core.BlockPos at = net.minecraft.core.BlockPos.containing(src.getPosition());
+        net.minecraft.core.BlockPos crater = com.panthrix.naturaldisasters.worldgen.VolcanoBuilder.build(src.getLevel(), at, src.getLevel().getRandom(), true);
+        if (crater == null) {
+            src.sendFailure(Component.literal("Aquí no se puede crear un volcán (¿hay agua debajo?)."));
+            return 0;
+        }
+        com.panthrix.naturaldisasters.core.VolcanoRegistry.get(src.getLevel()).add(crater);
+        src.sendSuccess(() -> Component.literal("Volcán creado. Cráter en X " + crater.getX() + ", Y " + crater.getY() + ", Z " + crater.getZ())
+                .withStyle(ChatFormatting.GREEN), true);
         return 1;
     }
 

@@ -61,6 +61,14 @@ public final class CatastropheConfig {
     public static final ForgeConfigSpec.BooleanValue QUAKE_BUILDING_DAMAGE;
     public static final ForgeConfigSpec.BooleanValue QUAKE_CAMERA_SHAKE;
     public static final ForgeConfigSpec.IntValue QUAKE_BLOCKS_PER_TICK;
+    public static final ForgeConfigSpec.BooleanValue VOLCANO_NATURAL;
+    public static final ForgeConfigSpec.IntValue VOLCANO_RARITY;
+    public static final ForgeConfigSpec.BooleanValue VOLCANO_CREATE_IF_NONE;
+    public static final ForgeConfigSpec.IntValue VOLCANO_SEARCH_RADIUS;
+    public static final ForgeConfigSpec.IntValue VOLCANO_DANGER_RADIUS;
+    public static final ForgeConfigSpec.BooleanValue VOLCANO_BOMBS;
+    public static final ForgeConfigSpec.BooleanValue VOLCANO_LAVA_FLOWS;
+    public static final ForgeConfigSpec.BooleanValue VOLCANO_LAVA_TEMPORARY;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_BLOCKS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_ZONES;
 
@@ -129,6 +137,17 @@ public final class CatastropheConfig {
         QUAKE_BUILDING_DAMAGE = b.comment("Hacer caer bloques de construcciones (madera, ladrillo...)").define("danoEdificios", false);
         QUAKE_CAMERA_SHAKE = b.comment("Vibracion de la camara de los jugadores (necesita el mod tambien en el cliente)").define("vibracionCamara", true);
         QUAKE_BLOCKS_PER_TICK = b.comment("Bloques que se excavan como maximo por tick (bajalo si el servidor va lento)").defineInRange("bloquesPorTick", 48, 8, 256);
+        b.pop();
+
+        b.comment("Volcanes").push("volcan");
+        VOLCANO_NATURAL = b.comment("Generar volcanes naturales en chunks NUEVOS (badlands, sabanas, colinas, llanuras)").define("generacionNatural", true);
+        VOLCANO_RARITY = b.comment("Rareza: de media 1 volcan cada N chunks aptos (mas alto = menos volcanes)").defineInRange("rareza", 400, 20, 100000);
+        VOLCANO_CREATE_IF_NONE = b.comment("Si no hay volcan cerca, la erupcion crea uno pequeno (necesita destruccion distinta de OFF)").define("crearSiNoHay", true);
+        VOLCANO_SEARCH_RADIUS = b.comment("Distancia maxima para buscar un volcan conocido cerca del jugador").defineInRange("radioBusqueda", 256, 32, 2048);
+        VOLCANO_DANGER_RADIUS = b.comment("Radio de la zona de peligro por calor alrededor del crater").defineInRange("radioPeligro", 12, 4, 48);
+        VOLCANO_BOMBS = b.comment("Lanzar rocas volcanicas que caen como bloques (necesita destruccion distinta de OFF)").define("rocasVolcanicas", true);
+        VOLCANO_LAVA_FLOWS = b.comment("La lava desborda el crater y baja por la ladera (necesita destruccion distinta de OFF)").define("coladasDeLava", true);
+        VOLCANO_LAVA_TEMPORARY = b.comment("Retirar las fuentes de lava de la erupcion al terminar").define("lavaTemporal", true);
         b.pop();
 
         b.comment("Proteccion del mundo. Ademas de esta lista, NUNCA se modifican bloques con inventario",

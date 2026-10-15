@@ -30,6 +30,7 @@ public class NaturalDisastersMod {
 
     public NaturalDisastersMod() {
         com.panthrix.naturaldisasters.network.ModNetwork.register();
+        com.panthrix.naturaldisasters.worldgen.ModFeatures.register(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CatastropheConfig.SPEC);
         // Nos registramos en el bus de eventos del juego para recibir eventos del servidor.
         MinecraftForge.EVENT_BUS.register(this);
@@ -51,6 +52,8 @@ public class NaturalDisastersMod {
     public void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server != null) CatastropheManager.tick(server);
+        if (server == null) return;
+        com.panthrix.naturaldisasters.core.VolcanoRegistry.drainPending(server);
+        CatastropheManager.tick(server);
     }
 }
