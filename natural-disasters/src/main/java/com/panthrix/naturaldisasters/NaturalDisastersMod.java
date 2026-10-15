@@ -29,6 +29,7 @@ public class NaturalDisastersMod {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public NaturalDisastersMod() {
+        com.panthrix.naturaldisasters.network.ModNetwork.register();
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CatastropheConfig.SPEC);
         // Nos registramos en el bus de eventos del juego para recibir eventos del servidor.
         MinecraftForge.EVENT_BUS.register(this);

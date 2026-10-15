@@ -52,6 +52,15 @@ public final class CatastropheConfig {
     public static final ForgeConfigSpec.IntValue FLOOD_RADIUS;
     public static final ForgeConfigSpec.BooleanValue FLOOD_TEMPORARY;
     public static final ForgeConfigSpec.BooleanValue FLOOD_CURRENTS;
+    public static final ForgeConfigSpec.IntValue QUAKE_CRACK_DEPTH;
+    public static final ForgeConfigSpec.IntValue QUAKE_CRACK_LENGTH;
+    public static final ForgeConfigSpec.IntValue QUAKE_CRACK_WIDTH;
+    public static final ForgeConfigSpec.IntValue QUAKE_CRACK_COUNT;
+    public static final ForgeConfigSpec.BooleanValue QUAKE_CAVES;
+    public static final ForgeConfigSpec.BooleanValue QUAKE_COLLAPSES;
+    public static final ForgeConfigSpec.BooleanValue QUAKE_BUILDING_DAMAGE;
+    public static final ForgeConfigSpec.BooleanValue QUAKE_CAMERA_SHAKE;
+    public static final ForgeConfigSpec.IntValue QUAKE_BLOCKS_PER_TICK;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_BLOCKS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_ZONES;
 
@@ -108,6 +117,18 @@ public final class CatastropheConfig {
         FLOOD_RADIUS = b.comment("Radio de la zona inundada (nunca mayor que 'radio')").defineInRange("radioInundacion", 24, 4, 64);
         FLOOD_TEMPORARY = b.comment("Retirar el agua al terminar").define("aguaTemporal", true);
         FLOOD_CURRENTS = b.comment("Corrientes que arrastran a quien este en el agua").define("corrientes", true);
+        b.pop();
+
+        b.comment("Terremotos (las grietas, cuevas y derrumbes necesitan destruccion distinta de OFF)").push("terremoto");
+        QUAKE_CRACK_DEPTH = b.comment("Profundidad maxima de las grietas en bloques").defineInRange("profundidadGrietas", 12, 2, 40);
+        QUAKE_CRACK_LENGTH = b.comment("Longitud maxima de las grietas en bloques").defineInRange("longitudGrietas", 24, 5, 64);
+        QUAKE_CRACK_WIDTH = b.comment("Anchura maxima de las grietas en bloques").defineInRange("anchoGrietas", 3, 1, 7);
+        QUAKE_CRACK_COUNT = b.comment("Numero de grietas (con destruccion INTENSE se suman zanjas anchas)").defineInRange("numeroGrietas", 2, 1, 8);
+        QUAKE_CAVES = b.comment("Abrir cuevas nuevas bajo tierra (solo con destruccion INTENSE)").define("cuevasNuevas", true);
+        QUAKE_COLLAPSES = b.comment("Derrumbes de tierra y piedra en los bordes de las grietas").define("derrumbes", true);
+        QUAKE_BUILDING_DAMAGE = b.comment("Hacer caer bloques de construcciones (madera, ladrillo...)").define("danoEdificios", false);
+        QUAKE_CAMERA_SHAKE = b.comment("Vibracion de la camara de los jugadores (necesita el mod tambien en el cliente)").define("vibracionCamara", true);
+        QUAKE_BLOCKS_PER_TICK = b.comment("Bloques que se excavan como maximo por tick (bajalo si el servidor va lento)").defineInRange("bloquesPorTick", 48, 8, 256);
         b.pop();
 
         b.comment("Proteccion del mundo. Ademas de esta lista, NUNCA se modifican bloques con inventario",
