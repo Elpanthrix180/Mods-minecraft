@@ -4,6 +4,7 @@ import com.panthrix.naturaldisasters.core.CatastropheType;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,6 +43,17 @@ public final class CatastropheConfig {
     public static final ForgeConfigSpec.BooleanValue HAIL_GLASS;
     public static final ForgeConfigSpec.BooleanValue DROUGHT_CROPS;
     public static final ForgeConfigSpec.BooleanValue DROUGHT_DRY_FARMLAND;
+
+    public static final ForgeConfigSpec.DoubleValue TORNADO_SPEED;
+    public static final ForgeConfigSpec.IntValue TORNADO_PULL_RADIUS;
+    public static final ForgeConfigSpec.BooleanValue TORNADO_LIFTS_BLOCKS;
+    public static final ForgeConfigSpec.BooleanValue TORNADO_UPROOTS_TREES;
+    public static final ForgeConfigSpec.IntValue FLOOD_HEIGHT;
+    public static final ForgeConfigSpec.IntValue FLOOD_RADIUS;
+    public static final ForgeConfigSpec.BooleanValue FLOOD_TEMPORARY;
+    public static final ForgeConfigSpec.BooleanValue FLOOD_CURRENTS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_BLOCKS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_ZONES;
 
     public static final Map<CatastropheType, ForgeConfigSpec.BooleanValue> ENABLED = new EnumMap<>(CatastropheType.class);
     public static final Map<CatastropheType, ForgeConfigSpec.IntValue> WEIGHT = new EnumMap<>(CatastropheType.class);
@@ -82,6 +94,31 @@ public final class CatastropheConfig {
         HAIL_GLASS = b.comment("Granizada: rompe cristales expuestos (solo con destruccion INTENSE)").define("granizoRompeCristales", false);
         DROUGHT_CROPS = b.comment("Sequia: los cultivos de la zona crecen mas despacio (efecto temporal)").define("sequiaFrenaCultivos", true);
         DROUGHT_DRY_FARMLAND = b.comment("Sequia: seca la tierra de cultivo (necesita destruccion distinta de OFF)").define("sequiaSecaTierras", false);
+        b.pop();
+
+        b.comment("Tornados").push("tornado");
+        TORNADO_SPEED = b.comment("Velocidad de desplazamiento en bloques por segundo").defineInRange("velocidad", 2.0, 0.0, 10.0);
+        TORNADO_PULL_RADIUS = b.comment("Radio en el que atrae a jugadores y criaturas").defineInRange("radioAtraccion", 8, 2, 24);
+        TORNADO_LIFTS_BLOCKS = b.comment("Levantar tierra, arena, grava, hojas y plantas (necesita destruccion distinta de OFF)").define("levantaBloques", true);
+        TORNADO_UPROOTS_TREES = b.comment("Arrancar troncos de arboles (solo con destruccion INTENSE)").define("arrancaArboles", false);
+        b.pop();
+
+        b.comment("Inundaciones (colocar agua necesita destruccion distinta de OFF)").push("inundacion");
+        FLOOD_HEIGHT = b.comment("Cuantos bloques sube el agua como maximo").defineInRange("alturaMaxima", 3, 1, 10);
+        FLOOD_RADIUS = b.comment("Radio de la zona inundada (nunca mayor que 'radio')").defineInRange("radioInundacion", 24, 4, 64);
+        FLOOD_TEMPORARY = b.comment("Retirar el agua al terminar").define("aguaTemporal", true);
+        FLOOD_CURRENTS = b.comment("Corrientes que arrastran a quien este en el agua").define("corrientes", true);
+        b.pop();
+
+        b.comment("Proteccion del mundo. Ademas de esta lista, NUNCA se modifican bloques con inventario",
+                "o datos (cofres, hornos, maquinas de otros mods...) ni bloques irrompibles (roca madre...).").push("proteccion");
+        PROTECTED_BLOCKS = b.comment("Bloques que nunca se modifican (id completo, por ejemplo minecraft:glass)")
+                .defineList("bloquesProtegidos", List.of("minecraft:spawner", "minecraft:beacon", "minecraft:respawn_anchor",
+                        "minecraft:end_portal_frame", "minecraft:nether_portal", "minecraft:obsidian", "minecraft:crying_obsidian",
+                        "minecraft:reinforced_deepslate", "minecraft:budding_amethyst"), o -> o instanceof String);
+        PROTECTED_ZONES = b.comment("Zonas protegidas en el mundo normal: \"x1,z1,x2,z2\" (esquinas). Ejemplo: \"-100,-100,100,100\"",
+                        "Dentro de ellas ningun fenomeno modifica bloques.")
+                .defineList("zonasProtegidas", List.of(), o -> o instanceof String);
         b.pop();
 
         b.comment("Ajustes de cada fenomeno").push("fenomenos");

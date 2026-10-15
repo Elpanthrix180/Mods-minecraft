@@ -54,7 +54,7 @@ public class DroughtEvent extends CatastropheEvent {
                 // La tierra de cultivo esta debajo del cultivo o es la propia superficie.
                 for (BlockPos p : new BlockPos[]{pos.below(), pos}) {
                     BlockState s = level.getBlockState(p);
-                    if (s.is(Blocks.FARMLAND) && s.getValue(FarmBlock.MOISTURE) > 0 && DisasterUtil.takeBlockBudget(d)) {
+                    if (s.is(Blocks.FARMLAND) && s.getValue(FarmBlock.MOISTURE) > 0 && com.panthrix.naturaldisasters.core.BlockProtection.canModify(level, p, s) && DisasterUtil.takeBlockBudget(d)) {
                         level.setBlock(p, s.setValue(FarmBlock.MOISTURE, 0), 2);
                     }
                 }

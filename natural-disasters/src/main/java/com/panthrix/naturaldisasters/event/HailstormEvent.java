@@ -78,7 +78,7 @@ public class HailstormEvent extends CatastropheEvent {
                 if (CatastropheConfig.HAIL_GLASS.get() && CatastropheConfig.DESTRUCTION.get() == CatastropheConfig.Destruction.INTENSE) {
                     BlockPos below = pos.below();
                     BlockState s = level.getBlockState(below);
-                    if ((s.is(Tags.Blocks.GLASS) || s.is(Tags.Blocks.GLASS_PANES)) && DisasterUtil.takeBlockBudget(d)) {
+                    if ((s.is(Tags.Blocks.GLASS) || s.is(Tags.Blocks.GLASS_PANES)) && com.panthrix.naturaldisasters.core.BlockProtection.canModify(level, below, s) && DisasterUtil.takeBlockBudget(d)) {
                         level.destroyBlock(below, false);
                     }
                 }
@@ -92,7 +92,7 @@ public class HailstormEvent extends CatastropheEvent {
         if (!(s.getBlock() instanceof CropBlock)) return;
         IntegerProperty age = s.hasProperty(BlockStateProperties.AGE_7) ? BlockStateProperties.AGE_7
                 : s.hasProperty(BlockStateProperties.AGE_3) ? BlockStateProperties.AGE_3 : null;
-        if (age == null || s.getValue(age) <= 0) return;
+        if (age == null || s.getValue(age) <= 0 || !com.panthrix.naturaldisasters.core.BlockProtection.canModify(level, pos, s)) return;
         if (!DisasterUtil.takeBlockBudget(d)) return;
         level.setBlock(pos, s.setValue(age, s.getValue(age) - 1), 2);
     }

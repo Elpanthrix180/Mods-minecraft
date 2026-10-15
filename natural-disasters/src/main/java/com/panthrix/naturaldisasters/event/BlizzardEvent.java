@@ -75,7 +75,7 @@ public class BlizzardEvent extends CatastropheEvent {
                 BlockPos pos = DisasterUtil.randomSurface(level, d, level.getRandom());
                 if (pos == null || !level.isEmptyBlock(pos)) continue;
                 BlockState snow = Blocks.SNOW.defaultBlockState();
-                if (!snow.canSurvive(level, pos)) continue;
+                if (!snow.canSurvive(level, pos) || !com.panthrix.naturaldisasters.core.BlockProtection.canPlace(level, pos)) continue;
                 if (!DisasterUtil.takeBlockBudget(d)) return;
                 level.setBlock(pos, snow, 3);
                 long[] old = d.eventData.getLongArray(SNOW_KEY);
