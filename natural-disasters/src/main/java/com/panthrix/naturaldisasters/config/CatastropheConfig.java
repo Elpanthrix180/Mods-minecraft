@@ -77,6 +77,7 @@ public final class CatastropheConfig {
     public static final ForgeConfigSpec.IntValue METEOR_CRATER_RADIUS;
     public static final ForgeConfigSpec.BooleanValue METEOR_ORES;
     public static final ForgeConfigSpec.IntValue METEOR_MAX_BLOCKS;
+    public static final ForgeConfigSpec.IntValue METEOR_BALL_RADIUS;
     public static final ForgeConfigSpec.BooleanValue METEOR_SKY_TINT;
     public static final ForgeConfigSpec.IntValue BLACK_HOLE_MAX_BLOCKS;
     public static final ForgeConfigSpec.IntValue BLACK_HOLE_PULL_RADIUS;
@@ -176,6 +177,7 @@ public final class CatastropheConfig {
         METEOR_CRATER_RADIUS = b.comment("Radio del crater de cada impacto").defineInRange("radioCrater", 5, 2, 12);
         METEOR_ORES = b.comment("Los meteoritos pueden dejar hierro en bruto en el crater").define("mineralesEnMeteoritos", true);
         METEOR_MAX_BLOCKS = b.comment("Bloques que puede modificar toda la lluvia (sustituye a maxBloquesPorEvento; alto = mas lag)").defineInRange("maxBloques", 5000, 100, 50000);
+        METEOR_BALL_RADIUS = b.comment("Radio de la bola de roca de cada meteorito (mas grande = mas entidades, mas lag)").defineInRange("radioBola", 2, 1, 4);
         METEOR_SKY_TINT = b.comment("El cielo se vuelve naranja antes y durante la lluvia (necesita el mod en el cliente)").define("cieloNaranja", true);
         b.pop();
 

@@ -11,13 +11,16 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -25,12 +28,13 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Lluvia de meteoritos gigantes.
  * - Preparacion: el cielo se tine de naranja y se ven estrellas fugaces.
- * - Cada meteorito es una gran bola de fuego (particulas, sin entidades) con una estela larga que
- *   baja del cielo en diagonal. Se oye un silbido al acercarse.
+ * - Cada meteorito es una BOLA SOLIDA de roca (bloques de magma y piedra negra que se mueven juntos,
+ *   sin chocar ni colocarse) envuelta en fuego, con una estela larga. Baja del cielo en diagonal y acelera.
  * - Impacto: varias explosiones, onda de choque fuerte, temblor de camara y, con destruccion
  *   PARTIAL/INTENSE, un crater grande con paredes de obsidiana y magma, piedra negra y lava en el fondo.
  * Los meteoritos en vuelo se guardan en el mundo.
@@ -38,7 +42,7 @@ import java.util.List;
 public class MeteorShowerEvent extends CatastropheEvent {
 
     private static final String KEY = "meteors";
-    private static final int MAX_IN_FLIGHT = 12;
+    private static final int MAX_IN_FLIGHT = 4;
 
     @Override
     public void tick(ServerLevel level, CatastropheSavedData d, CatastrophePhase phase, long now) {
@@ -64,18 +68,21 @@ public class MeteorShowerEvent extends CatastropheEvent {
             CompoundTag m = meteors.getCompound(i);
             double t = (now - m.getLong("t0")) / (double) m.getInt("dur");
             float size = m.getFloat("size");
-            if (t >= 1.0) {
+            int ball = m.getInt("ball");
+            // Aceleracion: va cada vez mas rapido al acercarse al suelo.
+            double e = Math.min(1.0, t * t);
+            Vec3 start = new Vec3(m.getDouble("sx"), m.getDouble("sy"), m.getDouble("sz"));
+            Vec3 end = new Vec3(m.getDouble("tx"), m.getDouble("ty") + ball, m.getDouble("tz"));
+            Vec3 pos = start.lerp(end, e);
+            if (t >= 1.0 || pos.distanceTo(end) < 1.0) {
+                discardBall(level, m);
                 impact(level, d, BlockPos.of(m.getLong("target")), size);
                 meteors.remove(i);
                 continue;
             }
-            // Aceleracion: va cada vez mas rapido al acercarse al suelo.
-            double e = t * t;
-            Vec3 start = new Vec3(m.getDouble("sx"), m.getDouble("sy"), m.getDouble("sz"));
-            Vec3 end = new Vec3(m.getDouble("tx"), m.getDouble("ty"), m.getDouble("tz"));
-            Vec3 pos = start.lerp(end, e);
             Vec3 back = start.subtract(end).normalize();
-            drawMeteor(level, pos, back, size);
+            moveBall(level, m, pos);
+            drawMeteor(level, pos, back, size + ball * 0.5f);
             if (now % 20 == 0) {
                 level.playSound(null, BlockPos.containing(pos), SoundEvents.FIRECHARGE_USE, SoundSource.WEATHER, 4.0f, 0.4f);
             }
@@ -125,7 +132,7 @@ public class MeteorShowerEvent extends CatastropheEvent {
         double a = r.nextDouble() * Math.PI * 2;
         CompoundTag m = new CompoundTag();
         m.putDouble("sx", target.getX() + 0.5 + Math.cos(a) * 60);
-        m.putDouble("sy", Math.min(level.getMaxBuildHeight() - 2, target.getY() + 120));
+        m.putDouble("sy", Math.min(level.getMaxBuildHeight() - 3 - CatastropheConfig.METEOR_BALL_RADIUS.get(), target.getY() + 120));
         m.putDouble("sz", target.getZ() + 0.5 + Math.sin(a) * 60);
         m.putDouble("tx", target.getX() + 0.5);
         m.putDouble("ty", target.getY());
@@ -134,7 +141,74 @@ public class MeteorShowerEvent extends CatastropheEvent {
         m.putLong("t0", now);
         m.putInt("dur", 60 + r.nextInt(40));
         m.putFloat("size", (float) ((1.5 + r.nextDouble() * 1.5) * Math.min(1.5, CatastropheConfig.intensityFactor())));
+        spawnBall(level, m, new Vec3(m.getDouble("sx"), m.getDouble("sy"), m.getDouble("sz")));
         meteors.add(m);
+    }
+
+    /**
+     * Crea la bola de roca: una esfera hueca de bloques que caen, sin gravedad ni choques.
+     * Se guardan sus UUID y su posicion relativa para moverlas juntas en cada tick.
+     */
+    private static void spawnBall(ServerLevel level, CompoundTag m, Vec3 center) {
+        int r = CatastropheConfig.METEOR_BALL_RADIUS.get();
+        RandomSource rand = level.getRandom();
+        ListTag ids = new ListTag();
+        List<Integer> offsets = new ArrayList<>();
+        BlockPos c = BlockPos.containing(center);
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dy = -r; dy <= r; dy++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    if (dist > r + 0.5 || dist < r - 0.6) continue; // solo la capa exterior
+                    BlockPos at = c.offset(dx, dy, dz);
+                    if (!level.isLoaded(at) || !level.isEmptyBlock(at)) continue; // nunca reemplaza bloques
+                    BlockState rock = rand.nextInt(3) == 0 ? Blocks.MAGMA_BLOCK.defaultBlockState()
+                            : rand.nextBoolean() ? Blocks.BLACKSTONE.defaultBlockState() : Blocks.BASALT.defaultBlockState();
+                    FallingBlockEntity fb = FallingBlockEntity.fall(level, at, rock);
+                    fb.setNoGravity(true);
+                    fb.noPhysics = true;
+                    fb.dropItem = false;
+                    fb.setDeltaMovement(Vec3.ZERO);
+                    ids.add(StringTag.valueOf(fb.getUUID().toString()));
+                    offsets.add(dx);
+                    offsets.add(dy);
+                    offsets.add(dz);
+                }
+            }
+        }
+        m.put("ids", ids);
+        m.putIntArray("offs", offsets.stream().mapToInt(Integer::intValue).toArray());
+        m.putInt("ball", r);
+    }
+
+    private static void moveBall(ServerLevel level, CompoundTag m, Vec3 pos) {
+        ListTag ids = m.getList("ids", Tag.TAG_STRING);
+        int[] offs = m.getIntArray("offs");
+        for (int k = 0; k < ids.size() && k * 3 + 2 < offs.length; k++) {
+            Entity e = level.getEntity(UUID.fromString(ids.getString(k)));
+            if (!(e instanceof FallingBlockEntity fb)) continue;
+            fb.noPhysics = true; // no se guarda al cerrar el mundo: se vuelve a poner
+            fb.setNoGravity(true);
+            fb.setDeltaMovement(Vec3.ZERO);
+            fb.setPos(pos.x + offs[k * 3], pos.y + offs[k * 3 + 1] - 0.5, pos.z + offs[k * 3 + 2]);
+        }
+    }
+
+    private static void discardBall(ServerLevel level, CompoundTag m) {
+        ListTag ids = m.getList("ids", Tag.TAG_STRING);
+        for (int k = 0; k < ids.size(); k++) {
+            Entity e = level.getEntity(UUID.fromString(ids.getString(k)));
+            if (e != null) e.discard();
+        }
+    }
+
+    @Override
+    public void onFinish(ServerLevel level, CatastropheSavedData d) {
+        // /pnd stop: las bolas que siguieran en el aire desaparecen sin dejar bloques.
+        ListTag meteors = d.eventData.getList(KEY, Tag.TAG_COMPOUND);
+        for (int i = 0; i < meteors.size(); i++) discardBall(level, meteors.getCompound(i));
+        d.eventData.remove(KEY);
+        d.setDirty();
     }
 
     private static void impact(ServerLevel level, CatastropheSavedData d, BlockPos pos, float size) {
