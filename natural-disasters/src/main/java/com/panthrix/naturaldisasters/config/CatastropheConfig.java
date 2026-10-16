@@ -73,6 +73,13 @@ public final class CatastropheConfig {
     public static final ForgeConfigSpec.IntValue SLIDE_MAX_BLOCKS;
     public static final ForgeConfigSpec.IntValue SLIDE_DEPTH;
     public static final ForgeConfigSpec.BooleanValue SLIDE_BUILDINGS;
+    public static final ForgeConfigSpec.IntValue METEORS_PER_MINUTE;
+    public static final ForgeConfigSpec.IntValue METEOR_CRATER_RADIUS;
+    public static final ForgeConfigSpec.BooleanValue METEOR_ORES;
+    public static final ForgeConfigSpec.IntValue BLACK_HOLE_PULL_RADIUS;
+    public static final ForgeConfigSpec.IntValue BLACK_HOLE_MAX_RADIUS;
+    public static final ForgeConfigSpec.IntValue BLACK_HOLE_HEIGHT;
+    public static final ForgeConfigSpec.BooleanValue BLACK_HOLE_CONSUMES_ITEMS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_BLOCKS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_ZONES;
 
@@ -161,6 +168,19 @@ public final class CatastropheConfig {
         SLIDE_BUILDINGS = b.comment("Arrastrar tambien bloques de construcciones (madera, ladrillo...)").define("arrastraConstrucciones", false);
         b.pop();
 
+        b.comment("Lluvia de meteoritos (los crateres necesitan destruccion distinta de OFF)").push("meteoritos");
+        METEORS_PER_MINUTE = b.comment("Meteoritos que caen por minuto (con intensidad moderada)").defineInRange("meteoritosPorMinuto", 6, 1, 60);
+        METEOR_CRATER_RADIUS = b.comment("Radio del crater de cada impacto").defineInRange("radioCrater", 2, 1, 6);
+        METEOR_ORES = b.comment("Los meteoritos pueden dejar hierro en bruto en el crater").define("mineralesEnMeteoritos", true);
+        b.pop();
+
+        b.comment("Agujero negro (absorber bloques necesita destruccion distinta de OFF)").push("agujeroNegro");
+        BLACK_HOLE_PULL_RADIUS = b.comment("Radio en el que atrae jugadores, criaturas y objetos").defineInRange("radioAtraccion", 16, 4, 48);
+        BLACK_HOLE_MAX_RADIUS = b.comment("Radio maximo en el que absorbe bloques (crece poco a poco)").defineInRange("radioAbsorcion", 6, 1, 16);
+        BLACK_HOLE_HEIGHT = b.comment("Altura sobre el suelo a la que aparece").defineInRange("altura", 6, 2, 30);
+        BLACK_HOLE_CONSUMES_ITEMS = b.comment("Destruye los objetos tirados que llegan al centro (si no, solo giran)").define("destruyeObjetos", false);
+        b.pop();
+
         b.comment("Proteccion del mundo. Ademas de esta lista, NUNCA se modifican bloques con inventario",
                 "o datos (cofres, hornos, maquinas de otros mods...) ni bloques irrompibles (roca madre...).").push("proteccion");
         PROTECTED_BLOCKS = b.comment("Bloques que nunca se modifican (id completo, por ejemplo minecraft:glass)")
@@ -176,7 +196,7 @@ public final class CatastropheConfig {
         for (CatastropheType t : CatastropheType.values()) {
             b.comment(t.displayName).push(t.id);
             ENABLED.put(t, b.comment("Activar este fenomeno").define("activado", true));
-            WEIGHT.put(t, b.comment("Probabilidad relativa (0 = nunca al azar)").defineInRange("peso", 10, 0, 1000));
+            WEIGHT.put(t, b.comment("Probabilidad relativa (0 = nunca al azar)").defineInRange("peso", t.defaultWeight, 0, 1000));
             DURATION_SECONDS.put(t, b.comment("Duracion de la fase activa, en segundos").defineInRange("duracionSegundos", 120, 10, 3600));
             b.pop();
         }

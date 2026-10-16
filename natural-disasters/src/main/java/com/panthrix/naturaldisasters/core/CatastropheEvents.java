@@ -1,5 +1,6 @@
 package com.panthrix.naturaldisasters.core;
 
+import com.panthrix.naturaldisasters.event.BlackHoleEvent;
 import com.panthrix.naturaldisasters.event.BlizzardEvent;
 import com.panthrix.naturaldisasters.event.DroughtEvent;
 import com.panthrix.naturaldisasters.event.EarthquakeEvent;
@@ -9,6 +10,7 @@ import com.panthrix.naturaldisasters.event.TornadoEvent;
 import com.panthrix.naturaldisasters.event.VolcanoEvent;
 import com.panthrix.naturaldisasters.event.HailstormEvent;
 import com.panthrix.naturaldisasters.event.LandslideEvent;
+import com.panthrix.naturaldisasters.event.MeteorShowerEvent;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -28,6 +30,8 @@ public final class CatastropheEvents {
         EVENTS.put(CatastropheType.EARTHQUAKE, new EarthquakeEvent());
         EVENTS.put(CatastropheType.VOLCANO, new VolcanoEvent());
         EVENTS.put(CatastropheType.LANDSLIDE, new LandslideEvent());
+        EVENTS.put(CatastropheType.METEOR_SHOWER, new MeteorShowerEvent());
+        EVENTS.put(CatastropheType.BLACK_HOLE, new BlackHoleEvent());
     }
 
     private CatastropheEvents() {}
