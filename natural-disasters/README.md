@@ -85,7 +85,7 @@ Archivo: `.minecraft\config\panthrixsnaturaldisasters-common.toml` (se crea la p
 - `[inundacion] alturaMaxima`, `radioInundacion`, `aguaTemporal`.
 - `[meteoritos] meteoritosPorMinuto`, `radioCrater`, `mineralesEnMeteoritos`, `maxBloques`, `cieloNaranja`, `radioBola` (tamaño de la bola de roca; más grande = más lag).
 - `[agujeroNegro] radioAtraccion`, `radioAbsorcion`, `altura`, `destruyeObjetos`, `maxBloques`.
-- Meteoritos y agujero negro usan su propio `maxBloques` (5000 y 6000) en lugar de `maxBloquesPorEvento`, porque mueven mucho terreno. Bájalo si el juego va lento.
+- Meteoritos y agujero negro usan su propio `maxBloques` (40000 y 30000) en lugar de `maxBloquesPorEvento`, porque mueven mucho terreno. Bájalo si el juego va lento.
 - Los fenómenos más extremos salen menos por defecto: meteoritos peso 6, agujero negro peso 3 (el resto 10).
 - Cada sección tiene más opciones, explicadas en los comentarios del propio archivo.
 
@@ -107,8 +107,8 @@ Archivo: `.minecraft\config\panthrixsnaturaldisasters-common.toml` (se crea la p
 | Terremoto | vibración de cámara, retumbos, polvo, sacudidas | grietas en V, derrumbes; zanjas y cuevas (INTENSE); daño a edificios (opción) |
 | Volcán | generación natural, humo, lava, ceniza, calor, temblores | rocas volcánicas, coladas de lava temporales, crea un volcán si no hay |
 | Deslizamiento | retumbo, polvo, empujones ladera abajo | la superficie de la ladera baja como bloques que caen |
-| Lluvia de meteoritos | el cielo se pone naranja; meteoritos gigantes: bolas sólidas de roca (magma, piedra negra, basalto) envueltas en fuego, con estela, que aceleran; impactos con varias explosiones, onda de choque y temblor fuerte | cráteres grandes con paredes de obsidiana, magma y piedra negra, y lava en el fondo (a veces hierro en bruto) |
-| Agujero negro | columna oscura vertical con disco de luz vertical y chorros; crece poco a poco y atrae cada vez más fuerte | se traga todo lo que no esté protegido —terreno, árboles y casas— en un radio que crece hasta `radioAbsorcion` (14) |
+| Lluvia de meteoritos | el cielo se pone naranja; bolas gigantes de magma brillante (4–9 bloques) envueltas en fuego que caen del cielo y aceleran; impactos con varias explosiones, onda de choque y temblor fuerte | cráteres gigantes (7–20 bloques de radio) que se excavan poco a poco, con paredes de obsidiana, magma y piedra negra, lago de lava en el fondo y fuego en el borde |
+| Agujero negro | columna oscura vertical con disco de luz vertical y chorros; crece poco a poco y atrae cada vez más fuerte | se traga todo lo que no esté protegido —terreno, árboles, agua y casas— en un radio que crece hasta `radioAbsorcion` (20) |
 
 Rendimiento: toda la lógica funciona en el servidor y en tandas pequeñas. Nunca se cargan chunks a propósito, y hay límites de bloques por tick y por evento.
 
