@@ -98,7 +98,7 @@ public class BlackHoleEvent extends CatastropheEvent {
 
         if (CatastropheConfig.destructionOff()) return;
         boolean intense = CatastropheConfig.DESTRUCTION.get() == CatastropheConfig.Destruction.INTENSE;
-        int perTick = (int) Math.max(2, (intense ? 24 : 10) * f * (0.3 + g));
+        int perTick = (int) Math.max(2, (intense ? 70 : 35) * f * (0.3 + g));
         if (phase == CatastrophePhase.ENDING) perTick /= 2;
         RandomSource r = level.getRandom();
         for (int i = 0; i < perTick; i++) {
