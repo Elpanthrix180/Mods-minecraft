@@ -5,7 +5,7 @@ Mod ID: `panthrixsnaturaldisasters` · Paquete Java: `com.panthrix.naturaldisast
 
 Añade catástrofes naturales aleatorias que cambian el clima, afectan a las criaturas y, si lo permites, modifican el terreno.
 
-> **Estado:** los 9 fenómenos están programados y el mod **compila** (GitHub Actions).
+> **Estado:** los 11 fenómenos están programados y el mod **compila** (GitHub Actions).
 > Las pruebas dentro del juego (lista de la sección 8) **las tiene que hacer el usuario**: no se han podido ejecutar desde el entorno de desarrollo.
 
 ---
@@ -50,7 +50,7 @@ Añade catástrofes naturales aleatorias que cambian el clima, afectan a las cri
 | `/pnd volcano` | admin | Volcanes conocidos y el más cercano |
 | `/pnd volcano create` | admin | Crea un volcán pequeño donde estás (modifica el terreno) |
 
-Fenómenos: `tornado`, `blizzard`, `earthquake`, `flood`, `volcano`, `thunderstorm`, `landslide`, `hailstorm`, `drought`.
+Fenómenos: `tornado`, `blizzard`, `earthquake`, `flood`, `volcano`, `thunderstorm`, `landslide`, `hailstorm`, `drought`, `meteor_shower`, `black_hole`.
 
 ## 5. Cómo funciona el director
 
@@ -83,6 +83,9 @@ Archivo: `.minecraft\config\panthrixsnaturaldisasters-common.toml` (se crea la p
 - `[general] danoJugadores` / `danoCriaturas`: si los fenómenos hacen daño.
 - `[terremoto] profundidadGrietas`, `longitudGrietas`, `anchoGrietas`, `numeroGrietas`, `bloquesPorTick`.
 - `[inundacion] alturaMaxima`, `radioInundacion`, `aguaTemporal`.
+- `[meteoritos] meteoritosPorMinuto`, `radioCrater`, `mineralesEnMeteoritos`.
+- `[agujeroNegro] radioAtraccion`, `radioAbsorcion`, `altura`, `destruyeObjetos`.
+- Los fenómenos más extremos salen menos por defecto: meteoritos peso 6, agujero negro peso 3 (el resto 10).
 - Cada sección tiene más opciones, explicadas en los comentarios del propio archivo.
 
 **Protección**
@@ -103,6 +106,8 @@ Archivo: `.minecraft\config\panthrixsnaturaldisasters-common.toml` (se crea la p
 | Terremoto | vibración de cámara, retumbos, polvo, sacudidas | grietas en V, derrumbes; zanjas y cuevas (INTENSE); daño a edificios (opción) |
 | Volcán | generación natural, humo, lava, ceniza, calor, temblores | rocas volcánicas, coladas de lava temporales, crea un volcán si no hay |
 | Deslizamiento | retumbo, polvo, empujones ladera abajo | la superficie de la ladera baja como bloques que caen |
+| Lluvia de meteoritos | estelas de fuego en el cielo, impactos con explosión, empuje y daño | cráteres con roca volcánica y, a veces, hierro en bruto |
+| Agujero negro | esfera oscura con disco giratorio, atrae jugadores, criaturas y objetos; daño en el centro | absorbe bloques en una esfera que crece (máx. `radioAbsorcion`) |
 
 Rendimiento: toda la lógica funciona en el servidor y en tandas pequeñas. Nunca se cargan chunks a propósito, y hay límites de bloques por tick y por evento.
 
@@ -136,6 +141,7 @@ Si una prueba falla, copia el error o el `latest.log` y compártelo para corregi
 - **Inundación:** al retirar el agua también se quitan las fuentes que el juego crea junto a ella. Si el mundo se cierra justo en ese momento, puede quedar algún bloque de agua que no se retire.
 - Las grietas, cuevas y deslizamientos son **permanentes**.
 - Las zonas no cargadas se saltan: un trozo de grieta o de nieve allí no se hace o no se retira.
+- Los bloques absorbidos por el agujero negro desaparecen para siempre (es un fenómeno destructivo; por eso solo actúa con destrucción PARTIAL/INTENSE).
 - La caída después de que el tornado te levante hace daño normal (si `danoJugadores = false`, no te levanta).
 
 ## 10. Compilar desde el código (opcional)
