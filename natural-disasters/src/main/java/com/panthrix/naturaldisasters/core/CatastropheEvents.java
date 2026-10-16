@@ -6,6 +6,7 @@ import com.panthrix.naturaldisasters.event.DroughtEvent;
 import com.panthrix.naturaldisasters.event.EarthquakeEvent;
 import com.panthrix.naturaldisasters.event.ExtremeThunderstormEvent;
 import com.panthrix.naturaldisasters.event.FloodEvent;
+import com.panthrix.naturaldisasters.event.GroundCrackEvent;
 import com.panthrix.naturaldisasters.event.TornadoEvent;
 import com.panthrix.naturaldisasters.event.VolcanoEvent;
 import com.panthrix.naturaldisasters.event.HailstormEvent;
@@ -32,6 +33,7 @@ public final class CatastropheEvents {
         EVENTS.put(CatastropheType.LANDSLIDE, new LandslideEvent());
         EVENTS.put(CatastropheType.METEOR_SHOWER, new MeteorShowerEvent());
         EVENTS.put(CatastropheType.BLACK_HOLE, new BlackHoleEvent());
+        EVENTS.put(CatastropheType.GROUND_CRACKS, new GroundCrackEvent());
     }
 
     private CatastropheEvents() {}

@@ -85,6 +85,14 @@ public final class CatastropheConfig {
     public static final ForgeConfigSpec.IntValue BLACK_HOLE_MAX_RADIUS;
     public static final ForgeConfigSpec.IntValue BLACK_HOLE_HEIGHT;
     public static final ForgeConfigSpec.BooleanValue BLACK_HOLE_CONSUMES_ITEMS;
+    public static final ForgeConfigSpec.IntValue CRACKS_COUNT;
+    public static final ForgeConfigSpec.IntValue CRACKS_LENGTH;
+    public static final ForgeConfigSpec.IntValue CRACKS_DEPTH;
+    public static final ForgeConfigSpec.IntValue CRACKS_WIDTH;
+    public static final ForgeConfigSpec.IntValue CRACKS_SPEED;
+    public static final ForgeConfigSpec.BooleanValue CRACKS_BRANCHES;
+    public static final ForgeConfigSpec.BooleanValue CRACKS_LAVA;
+    public static final ForgeConfigSpec.IntValue CRACKS_MAX_BLOCKS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_BLOCKS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PROTECTED_ZONES;
 
@@ -189,6 +197,17 @@ public final class CatastropheConfig {
         BLACK_HOLE_MAX_BLOCKS = b.comment("Bloques que puede tragarse (sustituye a maxBloquesPorEvento; alto = mas lag)").defineInRange("maxBloques", 30000, 100, 300000);
         BLACK_HOLE_HEIGHT = b.comment("Altura sobre el suelo a la que aparece").defineInRange("altura", 10, 2, 30);
         BLACK_HOLE_CONSUMES_ITEMS = b.comment("Destruye los objetos tirados que llegan al centro (si no, solo giran)").define("destruyeObjetos", false);
+        b.pop();
+
+        b.comment("Agrietamiento del terreno (abrir las grietas necesita destruccion distinta de OFF)").push("agrietamientos");
+        CRACKS_COUNT = b.comment("Grietas principales que salen del centro").defineInRange("numeroGrietas", 3, 1, 10);
+        CRACKS_LENGTH = b.comment("Longitud de cada grieta principal en bloques").defineInRange("longitud", 40, 8, 120);
+        CRACKS_DEPTH = b.comment("Profundidad maxima de las grietas").defineInRange("profundidad", 8, 2, 40);
+        CRACKS_WIDTH = b.comment("Anchura maxima de las grietas (en el punto de inicio)").defineInRange("ancho", 3, 1, 9);
+        CRACKS_SPEED = b.comment("Bloques que avanza cada grieta por segundo").defineInRange("velocidad", 4, 1, 20);
+        CRACKS_BRANCHES = b.comment("Las grietas se ramifican mientras avanzan").define("ramificaciones", true);
+        CRACKS_LAVA = b.comment("Lava en el fondo de las grietas mas profundas (solo con destruccion INTENSE)").define("lavaEnFondo", true);
+        CRACKS_MAX_BLOCKS = b.comment("Bloques que puede quitar todo el agrietamiento (sustituye a maxBloquesPorEvento)").defineInRange("maxBloques", 8000, 100, 100000);
         b.pop();
 
         b.comment("Proteccion del mundo. Ademas de esta lista, NUNCA se modifican bloques con inventario",

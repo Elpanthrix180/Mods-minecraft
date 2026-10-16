@@ -12,7 +12,8 @@ public enum CatastropheType {
     HAILSTORM("hailstorm", "Granizada", "¡ALERTA! Se aproxima una granizada. Buscad refugio."),
     DROUGHT("drought", "Sequía", "¡AVISO! Comienza un periodo de sequía."),
     METEOR_SHOWER("meteor_shower", "Lluvia de meteoritos", "¡ALERTA! Se aproxima una lluvia de meteoritos. Buscad refugio.", 6),
-    BLACK_HOLE("black_hole", "Agujero negro", "¡PELIGRO EXTREMO! Se está formando un agujero negro en esta zona.", 3);
+    BLACK_HOLE("black_hole", "Agujero negro", "¡PELIGRO EXTREMO! Se está formando un agujero negro en esta zona.", 3),
+    GROUND_CRACKS("ground_cracks", "Agrietamiento del terreno", "¡PELIGRO! El terreno empieza a agrietarse en esta zona. Alejaos de las grietas.", 8);
 
     public final String id;
     public final String displayName;
