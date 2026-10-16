@@ -5,7 +5,7 @@ Mod ID: `panthrixsnaturaldisasters` · Paquete Java: `com.panthrix.naturaldisast
 
 Añade catástrofes naturales aleatorias que cambian el clima, afectan a las criaturas y, si lo permites, modifican el terreno.
 
-> **Estado:** los 11 fenómenos están programados y el mod **compila** (GitHub Actions).
+> **Estado:** los 12 fenómenos están programados y el mod **compila** (GitHub Actions).
 > Las pruebas dentro del juego (lista de la sección 8) **las tiene que hacer el usuario**: no se han podido ejecutar desde el entorno de desarrollo.
 
 ---
@@ -50,7 +50,7 @@ Añade catástrofes naturales aleatorias que cambian el clima, afectan a las cri
 | `/pnd volcano` | admin | Volcanes conocidos y el más cercano |
 | `/pnd volcano create` | admin | Crea un volcán pequeño donde estás (modifica el terreno) |
 
-Fenómenos: `tornado`, `blizzard`, `earthquake`, `flood`, `volcano`, `thunderstorm`, `landslide`, `hailstorm`, `drought`, `meteor_shower`, `black_hole`.
+Fenómenos: `tornado`, `blizzard`, `earthquake`, `flood`, `volcano`, `thunderstorm`, `landslide`, `hailstorm`, `drought`, `meteor_shower`, `black_hole`, `ground_cracks`.
 
 ## 5. Cómo funciona el director
 
@@ -84,6 +84,7 @@ Archivo: `.minecraft\config\panthrixsnaturaldisasters-common.toml` (se crea la p
 - `[terremoto] profundidadGrietas`, `longitudGrietas`, `anchoGrietas`, `numeroGrietas`, `bloquesPorTick`.
 - `[inundacion] alturaMaxima`, `radioInundacion`, `aguaTemporal`.
 - `[meteoritos] meteoritosPorMinuto`, `radioCrater`, `mineralesEnMeteoritos`, `maxBloques`, `cieloNaranja`, `radioBola` (tamaño de la bola de roca; más grande = más lag).
+- `[agrietamientos] numeroGrietas`, `longitud`, `profundidad`, `ancho`, `velocidad`, `ramificaciones`, `lavaEnFondo`, `maxBloques`.
 - `[agujeroNegro] radioAtraccion`, `radioAbsorcion`, `altura`, `destruyeObjetos`, `maxBloques`.
 - Meteoritos y agujero negro usan su propio `maxBloques` (40000 y 30000) en lugar de `maxBloquesPorEvento`, porque mueven mucho terreno. Bájalo si el juego va lento.
 - Los fenómenos más extremos salen menos por defecto: meteoritos peso 6, agujero negro peso 3 (el resto 10).
@@ -109,6 +110,7 @@ Archivo: `.minecraft\config\panthrixsnaturaldisasters-common.toml` (se crea la p
 | Deslizamiento | retumbo, polvo, empujones ladera abajo | la superficie de la ladera baja como bloques que caen |
 | Lluvia de meteoritos | el cielo se pone naranja; bolas gigantes de magma brillante (4–9 bloques) envueltas en fuego que caen del cielo y aceleran; impactos con varias explosiones, onda de choque y temblor fuerte | cráteres gigantes (7–20 bloques de radio) que se excavan poco a poco, con paredes de obsidiana, magma y piedra negra, lago de lava en el fondo y fuego en el borde |
 | Agujero negro | columna oscura vertical con disco de luz vertical y chorros; crece poco a poco y atrae cada vez más fuerte | se traga todo lo que no esté protegido —terreno, árboles, agua y casas— en un radio que crece hasta `radioAbsorcion` (20) |
+| Agrietamiento del terreno | crujidos, polvo y vapor; las grietas se ven avanzar desde el centro, serpentean y se ramifican; temblor ligero | las grietas se abren de verdad (anchas y profundas en el centro, finas en la punta); con INTENSE, lava en el fondo |
 
 Rendimiento: toda la lógica funciona en el servidor y en tandas pequeñas. Nunca se cargan chunks a propósito, y hay límites de bloques por tick y por evento.
 
