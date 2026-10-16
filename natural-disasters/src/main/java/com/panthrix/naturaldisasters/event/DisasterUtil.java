@@ -75,8 +75,13 @@ public final class DisasterUtil {
 
     /** Reserva un bloque del limite maxBloquesPorEvento. Devuelve false si ya se ha alcanzado. */
     public static boolean takeBlockBudget(CatastropheSavedData d) {
+        return takeBlockBudget(d, CatastropheConfig.MAX_BLOCKS_PER_EVENT.get());
+    }
+
+    /** Igual, pero con un limite propio (para fenomenos que mueven muchos bloques). */
+    public static boolean takeBlockBudget(CatastropheSavedData d, int limit) {
         int used = d.eventData.getInt("blocks");
-        if (used >= CatastropheConfig.MAX_BLOCKS_PER_EVENT.get()) return false;
+        if (used >= limit) return false;
         d.eventData.putInt("blocks", used + 1);
         d.setDirty();
         return true;

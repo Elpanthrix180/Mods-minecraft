@@ -28,6 +28,18 @@ public final class ModNetwork {
                 .decoder(ShakePacket::new)
                 .consumerMainThread(ShakePacket::handle)
                 .add();
+        CHANNEL.messageBuilder(SkyTintPacket.class, 1, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(SkyTintPacket::encode)
+                .decoder(SkyTintPacket::new)
+                .consumerMainThread(SkyTintPacket::handle)
+                .add();
+    }
+
+    /** Tine de naranja el cielo/niebla del jugador con esta fuerza (0..1) durante estos ticks. */
+    public static void sendSkyTint(ServerPlayer player, float strength, int ticks) {
+        if (CHANNEL.isRemotePresent(player.connection.connection)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new SkyTintPacket(strength, ticks));
+        }
     }
 
     public static void sendShake(ServerPlayer player, float strength, int ticks) {

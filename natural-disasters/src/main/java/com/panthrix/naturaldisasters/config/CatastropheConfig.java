@@ -76,6 +76,10 @@ public final class CatastropheConfig {
     public static final ForgeConfigSpec.IntValue METEORS_PER_MINUTE;
     public static final ForgeConfigSpec.IntValue METEOR_CRATER_RADIUS;
     public static final ForgeConfigSpec.BooleanValue METEOR_ORES;
+    public static final ForgeConfigSpec.IntValue METEOR_MAX_BLOCKS;
+    public static final ForgeConfigSpec.IntValue METEOR_BALL_RADIUS;
+    public static final ForgeConfigSpec.BooleanValue METEOR_SKY_TINT;
+    public static final ForgeConfigSpec.IntValue BLACK_HOLE_MAX_BLOCKS;
     public static final ForgeConfigSpec.IntValue BLACK_HOLE_PULL_RADIUS;
     public static final ForgeConfigSpec.IntValue BLACK_HOLE_MAX_RADIUS;
     public static final ForgeConfigSpec.IntValue BLACK_HOLE_HEIGHT;
@@ -169,15 +173,19 @@ public final class CatastropheConfig {
         b.pop();
 
         b.comment("Lluvia de meteoritos (los crateres necesitan destruccion distinta de OFF)").push("meteoritos");
-        METEORS_PER_MINUTE = b.comment("Meteoritos que caen por minuto (con intensidad moderada)").defineInRange("meteoritosPorMinuto", 6, 1, 60);
-        METEOR_CRATER_RADIUS = b.comment("Radio del crater de cada impacto").defineInRange("radioCrater", 2, 1, 6);
+        METEORS_PER_MINUTE = b.comment("Meteoritos que caen por minuto (con intensidad moderada)").defineInRange("meteoritosPorMinuto", 3, 1, 60);
+        METEOR_CRATER_RADIUS = b.comment("Radio del crater de cada impacto").defineInRange("radioCrater", 5, 2, 12);
         METEOR_ORES = b.comment("Los meteoritos pueden dejar hierro en bruto en el crater").define("mineralesEnMeteoritos", true);
+        METEOR_MAX_BLOCKS = b.comment("Bloques que puede modificar toda la lluvia (sustituye a maxBloquesPorEvento; alto = mas lag)").defineInRange("maxBloques", 5000, 100, 50000);
+        METEOR_BALL_RADIUS = b.comment("Radio de la bola de roca de cada meteorito (mas grande = mas entidades, mas lag)").defineInRange("radioBola", 2, 1, 4);
+        METEOR_SKY_TINT = b.comment("El cielo se vuelve naranja antes y durante la lluvia (necesita el mod en el cliente)").define("cieloNaranja", true);
         b.pop();
 
         b.comment("Agujero negro (absorber bloques necesita destruccion distinta de OFF)").push("agujeroNegro");
         BLACK_HOLE_PULL_RADIUS = b.comment("Radio en el que atrae jugadores, criaturas y objetos").defineInRange("radioAtraccion", 16, 4, 48);
-        BLACK_HOLE_MAX_RADIUS = b.comment("Radio maximo en el que absorbe bloques (crece poco a poco)").defineInRange("radioAbsorcion", 6, 1, 16);
-        BLACK_HOLE_HEIGHT = b.comment("Altura sobre el suelo a la que aparece").defineInRange("altura", 6, 2, 30);
+        BLACK_HOLE_MAX_RADIUS = b.comment("Radio maximo que alcanza al crecer (se traga todo lo que no este protegido, casas incluidas)").defineInRange("radioAbsorcion", 14, 2, 32);
+        BLACK_HOLE_MAX_BLOCKS = b.comment("Bloques que puede tragarse (sustituye a maxBloquesPorEvento; alto = mas lag)").defineInRange("maxBloques", 6000, 100, 50000);
+        BLACK_HOLE_HEIGHT = b.comment("Altura sobre el suelo a la que aparece").defineInRange("altura", 10, 2, 30);
         BLACK_HOLE_CONSUMES_ITEMS = b.comment("Destruye los objetos tirados que llegan al centro (si no, solo giran)").define("destruyeObjetos", false);
         b.pop();
 
